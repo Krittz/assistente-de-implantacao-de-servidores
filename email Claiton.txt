@@ -1,0 +1,28 @@
+Olá Cristian,
+
+Segue anexo, os scripts iniciais para o tcc.
+
+Att.,
+
+
+Introdução
+aqui descrever a importância do linux em servidores e rede
+importancia de shell script
+automação
+objetivos
+justificativa
+organização do trabalho
+
+
+Desenvolvimento
+1 - referencial teórico
+2 - Implementação automatizada de servidores
+3 - Serviços de Redes e Servidores
+3.1 Configuração de Rede
+3.2 SSH e SCP
+3.3 LAMP
+e outros
+
+Conclusão
+
+Referências bibliográfica

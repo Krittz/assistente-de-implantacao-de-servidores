@@ -1,0 +1,273 @@
+#			=============================================
+#			--------------- [ Samba ] -------------------
+#			=============================================
+Crie um Dockerfile:
+
+Crie um arquivo chamado Dockerfile.samba com o seguinte conteúdo:
+
+# ----- SOF ---------
+FROM debian:bookworm-slim
+
+# Instalação do Samba
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y samba \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Expor as portas necessárias
+EXPOSE 137/udp 138/udp 139 445
+
+# Copiar o arquivo de configuração do Samba
+COPY smb.conf /etc/samba/smb.conf
+
+# Criar um volume para compartilhamento de arquivos
+VOLUME /samba
+
+# Comando para iniciar o servidor Samba
+CMD ["smbd", "--foreground", "--no-process-group"]
+
+#---------- EOF ------------
+Este Dockerfile usa a imagem base Debian Bookworm, instala o Samba, expõe as portas necessárias (137/udp, 138/udp, 139, 445), copia um arquivo de configuração pré-existente chamado smb.conf para a pasta /etc/samba/, cria um volume chamado /samba para compartilhamento de arquivos e inicia o servidor Samba.
+
+Crie o arquivo de configuração do Samba (smb.conf):
+
+Crie um arquivo chamado smb.conf com as configurações do Samba. Aqui está um exemplo básico:
+
+#---- SOF ----
+[global]
+    workgroup = WORKGROUP
+    server string = Samba Server %v
+    netbios name = samba-server
+    security = user
+
+[shared]
+    path = /samba
+    read only = no
+    guest ok = yes
+#---- EOF ----
+
+Este exemplo configura um compartilhamento chamado "shared" que permite acesso de convidados.
+
+Construa a imagem Docker:
+
+Execute o seguinte comando para construir a imagem Docker:
+
+# ~/ docker build -t samba-container -f Dockerfile.samba .
+
+Execute o contêiner Samba:
+
+Após a construção da imagem, você pode executar o contêiner Samba:
+
+# ~/ docker run -d --name samba-instance -p 137:137/udp -p 138:138/udp -p 139:139 -p 445:445 -v /caminho/local:/samba samba-container
+Substitua /caminho/local pelo caminho do diretório local que você deseja compartilhar.
+
+Agora, você terá um servidor Samba em execução em um contêiner Docker, pronto para compartilhar arquivos conforme configurado no arquivo smb.conf. Certifique-se de ajustar as configurações conforme necessário para atender às suas necessidades específicas.
+
+
+#			=============================================
+#			----------------- [ SSH ] -------------------
+#			=============================================
+
+Crie um Dockerfile
+
+Crie um arquivo chamado Dockerfile.ssh com o seguinte conteudo
+# ---- SOF ----
+FROM debian:bookworm-slim
+
+#Instalação do servidor SSh
+RUN apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
+#Configuração do servidor SSH
+RUN mkdir /var/run/sshd
+
+#Configurar a senha para o usuário root (substitua 'password' pela senha desejada)
+RUN echo 'root:password' | chpasswd
+
+#Expor a porta SSH (porta 22)
+EXPOSE 22
+
+#Comando para iniciar o servidor SSH
+CMD ["/usr/sbin/sshd", "-D"]
+# ---- EOF ----
+
+Este Dockerfile utiliza a imagem base Debian Bookworm, instala o servidor SSH, cria o diretório necessário para o serviço SSH
+e define a senha para o usuário root. Além disso, expõe a porta SSH padrão (porta 22) e inicia o servidor SSH.
+
+2-> Construir a imagem Docker:
+
+Execute o seguinte comando para executar a imagem Docker:
+# ~/ docker build -t ssh-container -f Dockerfile.ssh .
+
+3-> Execute o contêiner SSH:
+Depois de construir a imagemm, você pode executar o contêiner SSH com o seguinte comando:
+# ~/ docker run -d --name ssh-instance -p 2222:22 ssh-container
+Este comando executa o container SSh em segundo plano, com o nome 'ssh-instance' e expõe a porta 2222 do host
+para a porta 22 dentro do contêiner;
+
+4-> Conectar-se ao servidor SSH:
+Agora, você pode se conectar ao servidor SSH usando um cliente SSH. Por exemplo:
+# ~/ ssh root@localhost -p 2222
+
+#			=============================================
+#			--------------- [ VSFTPD ] -----------------
+#			=============================================
+
+1-> Crie um Dockerfile para o vsftpd
+Crie um novo Dockerfile por exemplo Dockerfile.vsftpd com o seguinte conteúdo
+# ---- SOF ----
+FROM debian:bookworm-slim
+
+# Instalação do vsftpd
+RUN apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y vsftpd \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Cópia do arquivo de configuração do vsftpd
+COPY vsftpd.conf /etc/vsftdp.conf
+
+# Criar um diretório para o compartilhamento FTP
+RUN mkdir -p /var/ftp
+
+# Definir permissões no diretório de compartilhamento FTP
+RUN chown nobody:nogroup /var/ftp
+RUN chmod a-w /var/ftp
+
+# Expor a porta FTP (padrão: 21)
+EXPOSE 21
+
+# Comando para iniciar o servidor vsftpd
+CMD ["vsftpd", "/etc/vsftpd.conf]
+# ---- EOF ----
+Este Dockerfile utiliza a imagem base Debian Bookworm, instala o vsftpd, copia um arquivo de configuração personalizada
+'vsftpd.conf', cria um diretório para o compartilhamento FTP e define as permissões necessárias.
+ Além disso, expões a porta FTP padrão (porta 21) e inicia o servidor vsftpd.
+
+2-> Crie um arquivo de configuração vsftpd:
+Cire um arquivo de configuração do vsftpd(por exemplo, 'vsftpd.conf') 
+com as configurações desejadas para o seu servidor FTP. Aqui está um exemplo básico para começar:
+# ---- SOF ----
+listen=YES
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+local_umask=022
+dirmessage_enable=YES
+use_localtime=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+chroot_local_user=YES
+secure_chroot_dir=/var/run/vsftpd/empty
+pam_service_name=vsftpd
+rsa_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+rsa_private_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+# ---- EOF ----
+
+3-> Construa a imagem Docker:
+Execute o seguinte comando para construir a imagem Docker:
+# ~/ docker build -t vsftpd-container -f Dockerfile.vsftpd .
+
+4-> Execute o contêiner vsftdp:
+# ~/ docker run -d --name vsftpd-instance -p 21:21 -v /var/ftp:/var/ftp vsftd-container
+
+Este comando executa o contêiner vsftpd em segundo plano, com o nome 'vsftpd-instance', expõe a porta FTP padrão (porta 21)
+e monta o diretório de compartilhamento FTP ('/var/ftp') dentro do contêiner.
+
+#			=============================================
+#			--------------- [ PROFTPD ] -----------------
+#			=============================================
+
+1-> Crie um Dockerfile para o ProFTPD
+Cire um novo Dockerfile(por exemplo, 'Dockerfile.proftpd') com o seguinte conteúdo:
+
+#---- SOF ----
+FROM debian:bookworm-slim
+
+# Instalação do ProFTPD
+RUN apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y proftpd \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Cópia do arquivo de configuração do ProFTPD
+COPY proftd.conf /etc/proftpd/proftpd.cong
+
+# Expor a porta FTP (padrão: 21)
+EXPOSE 21
+
+# Comando para iniciar o servidor ProFTPD
+CMD ["proftpd", "--nodaemon" ]
+
+# ---- EOF ----
+Este Dockerfile utiliza a imagem base Debian Bookworm, instala o ProFTPD, copia um arquivo de configuração 
+personalizado 'proftpd.conf' e expõe a porta FTP padrão (porta 21).
+Além disso iniciar o servidor ProFTPD sem o modo daemon.
+
+2-> Crie um arquivo de configuração do ProFTPD:
+Crie um arquivo de configuração do ProFTPD( proftpd.cong) com as configurações desejadas para seu servidor FTP.
+Aqui está um exemplo básico para começar:
+# ---- SOF ----
+ServerName "FTP Server"
+ServerType standalone
+DefaultServer on
+Port 21
+Umask 022
+MaxInstances 30
+User nobody
+Group nogroup
+DefaultRoot ~
+# ---- EOF ----
+Este arquivo de configuração define o nome do servidor, o tipo de servidor, a porta FTP, as permissões padrão,
+o número máximo de instâncias e outras configurações.
+
+3-> Construa a imagem Docker
+Execute o seguinte comando para construir a imagem Docker:
+# ~/ docker build -t proftpd-container -f Dockerfile.proftd .
+
+4-> Execute o contêiner ProFTPD
+Após a construção da imagem, você pode executar o contêiner ProFTPD com o seguinte comando:
+# ~/ docker run -d --name proftpd-instance -p 21:21 proftpd-container
+Este comando executa o contêiner ProFTPD em segundo plano, com o nome 'proftpd-instance' e expõe a porta FTP padrão(porta 21)
+
+5-> Teste o servidor FTP:
+Você pode usar um cliente FTP (como FileZilla) para se conectar ao servidor FTP. Use o IP do
+host Docker e a porta 21, e faça login com um usuário local do sistema.
+
+
+#			=============================================
+#              		----------------- [ LAMP ] ------------------
+#			=============================================
+
+1-> Crie um Dockerfile para o LAMP:
+Primeiro, crie um novo Dockerfile(por exemplo, 'Dockerfile.lamp') com o seguinte conteúdo:
+
+# ---- SOF ----
+FROM debian:bookworm-slim
+
+# Instalação do Apache, MySQL, e PHP
+RUN apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y apache2 mysql-server php php-mysql \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
+# Expor a porta do Apache (padrão: 80)
+EXPOSE 80
+
+# Comando para iniciar o Apache em primeiro plano
+CMD ["apachectl", "-D", "FOREGROUND"]
+# ---- EOF ----
+Este Dockerfile utiliza a imagem base Debian Bookworm, instala o Apache, MySQL e PHP, e expõe a
+porta padrão do Apache (porta 80).
+
+2-> Construa a imagem Docker:
+Execute o seguinte comando para construir a imagem Docker:
+# ~/ docker build -t lamp-container -f Dockerfile.lamp .
+
+3-> Execute o contêiner LAMP:
+Após a construção da imagem, você pode executar o contêiner LAMP com o seguinte comando:
+# ~/ docker run -d --name lamp-instance -p 80:80 lamp-container
+Este comando executa o contêiner LAMP em segundo plano, com o nome 'lamp-instance' e expõe a porta
+padrão do Apache (porta 80).

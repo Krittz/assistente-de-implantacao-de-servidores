@@ -1,0 +1,14 @@
+FROM debian:bookworm-slim
+
+# Instalação do ProFTPD
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y proftpd && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Cópia do arquivo de configuração do ProFTPD
+COPY proftpd.conf /etc/proftpd/proftpd.conf
+
+# Expor a porta FTP (padrão: 21)
+EXPOSE 21
+
+# Comando para iniciar o servidor ProFTPD
+CMD ["proftpd", "--nodaemon"]
+
