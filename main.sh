@@ -15,10 +15,10 @@ if [ "$(id -u)" -ne 0 ]; then
 	exit 1
 fi
 
-echo "{$CYAN}╔═══════════════════════════╗"
-echo "║{$RESET}              MENU PRINCIPAL         {$CYAN}║"
-echo "╠═══════════════════════════╣"
-echo "║{$RESET} [1] - Docker                        {$CYAN}║"
-echo "║{$RESET} [2] - Serviços                      {$CYAN}║"
-echo "║{$RESET} [0] - Sair                          {$CYAN}║"
-echo "╚═══════════════════════════╝{$RESET}"
+echo -e "${CYAN}╔═══════════════════════════╗"
+echo -e "║${RESET}              MENU PRINCIPAL         ${CYAN}║"
+echo -e "╠═══════════════════════════╣"
+echo -e "║${RESET} [1] - Docker                        ${CYAN}║"
+echo -e "║${RESET} [2] - Serviços                      ${CYAN}║"
+echo -e "║${RESET} [0] - Sair                          ${CYAN}║"
+echo -e "╚═══════════════════════════╝{$RESET}"
