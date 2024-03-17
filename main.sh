@@ -1,4 +1,13 @@
 #!/bin/bash
+RESET="\e[0m"
+RED="\e[91m"
+GREEN="\e[92m"
+YELLOW="\e[93m"
+CYAN="\e[96m"
+BOLD="\e[1m"
+BLUE="\e[34m"
+MAGENTA="\e[35m"
+PISCAR="\e[5m"
 create_samba() {
     clear
     SMBCONF="smb.conf"
@@ -117,8 +126,10 @@ docker_install() {
         fi
         clear
         echo "Adicionando usuário ao grupo docker..."
-        usermod -aG docker cristian
-        chown cristian:docker /var/run/docker.sock
+        echo -e "${BOLD} Nome do usuário que ira utilizar o Docker: ${RESET}"
+        read usr
+        usermod -aG docker $usr
+        chown $usr:docker /var/run/docker.sock
         systemctl restart docker
         clear
         docker --version
