@@ -1,0 +1,6 @@
+FROM debian:bookworm-slim
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y openssh-server && apt clean && rm -rf /var/lib/apt/lists/*
+RUN mkdir /var/run/sshd
+RUN echo "root:CALANGOS" | chpasswd
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"] 

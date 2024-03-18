@@ -8,6 +8,8 @@ BOLD="\e[1m"
 BLUE="\e[34m"
 MAGENTA="\e[35m"
 PISCAR="\e[5m"
+
+# .........................::: CRIAÇÃO DE CONTAINERS :::.........................
 create_samba() {
     clear
     SMBCONF="smb.conf"
@@ -34,7 +36,7 @@ CMD ["smbd", "--foreground", "--no-process-group"]
 EOF
     echo "Dockerfile.samba criado com sucesso!"
 
-    echo "Buildando container samba"
+    echo "Construindo container samba"
     docker build -t samba-container -f Dockerfile.samba .
     clear
     echo "Escreva o caminho do diretorio a ser compartilhado"
@@ -57,6 +59,35 @@ EOF
         echo "Falha ao criar o container Samba."
     fi
 }
+create_ssh() {
+    clear
+    echo -e "${BOLD} Qual a senha deseja configurar para o root do ssh: ${RESET}"
+    read pass
+    DOCKERFILE="Dockerfile.ssh"
+    cat <<EOF >$DOCKERFILE 
+FROM debian:bookworm-slim
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y openssh-server && apt clean && rm -rf /var/lib/apt/lists/*
+RUN mkdir /var/run/sshd
+RUN echo "root:$pass" | chpasswd
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"] 
+EOF
+
+    echo "Dockerfile.ssh criado com sucesso."
+    clear
+    echo "Construindo container SSH"
+    docker build -t ssh-container -f Dockerfile.ssh .
+
+    echo "Executando o container SSH"
+    docker run -d --name ssh-instance -p 2222:22 ssh-container
+
+    if docker ps -a | grep -q ssh-instance; then
+        echo "O container SSH foi criado com sucesso."
+    else
+        echo "Falha ao criar o container SSH."
+    fi
+}
+
 container_create() {
     clear
     echo "╔═══════════════════════════╗"
@@ -84,6 +115,9 @@ container_create() {
     *) echo "Erro: Opção inválida" ;;
     esac
 }
+# .........................::: FIM DA CRIAÇÃO DE CONTAINERS :::.........................
+# ....................................................................................
+# .........................::: MANIPULAÇÃO DO DOCKER :::.........................
 
 docker_install() {
     clear
@@ -150,7 +184,7 @@ docker_uninstall() {
         apt clean
         groupdel docker
     else
-        echo "Docker já esta desinstalado"
+        echo "Docker não esta instalado"
     fi
 }
 
@@ -168,6 +202,7 @@ docker_menu() {
     1) docker_install ;;
     esac
 }
+# .........................::: FIM DA MANIPULAÇÃO DO DOCKER :::.........................
 
 menu() {
     clear
