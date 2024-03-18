@@ -1,6 +1,0 @@
-FROM debian:bookworm-slim
-RUN apt update && apt install -y --no-install-recommends samba && apt clean && rm -rf /var/lib/apt/lists/*
-EXPOSE 137/udp 138/udp 139/tcp 445/tcp
-COPY smb.conf /etc/samba/smb.conf
-VOLUME /samba
-CMD ["smbd", "--foreground", "--no-process-group"]

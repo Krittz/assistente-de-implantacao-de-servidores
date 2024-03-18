@@ -13,7 +13,7 @@ PISCAR="\e[5m"
 create_samba() {
     clear
     SMBCONF="smb.conf"
-    cat <<EOF >$SMBCONF
+    cat <<EOF > Confs/$SMBCONF
 [global]
     workgroup = WORKGROUP
     server string = Samba Server %v
@@ -26,7 +26,7 @@ create_samba() {
 EOF
     clear
     DOCKERFILE="Dockerfile.samba"
-    cat <<EOF >$DOCKERFILE
+    cat <<EOF > Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
 RUN apt update && apt install -y --no-install-recommends samba && apt clean && rm -rf /var/lib/apt/lists/*
 EXPOSE 137/udp 138/udp 139/tcp 445/tcp
@@ -37,9 +37,9 @@ EOF
     echo "Dockerfile.samba criado com sucesso!"
 
     echo "Construindo container samba"
-    docker build -t samba-container -f Dockerfile.samba .
+    docker build -t samba-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
     clear
-    echo "Escreva o caminho do diretorio a ser compartilhado"
+    echo "Escreva o caminho do diretório a ser compartilhado"
     read caminho
 
     if [ -z "$caminho" ]; then
@@ -59,12 +59,13 @@ EOF
         echo "Falha ao criar o container Samba."
     fi
 }
+
 create_ssh() {
     clear
     echo -e "${BOLD} Qual a senha deseja configurar para o root do ssh: ${RESET}"
     read pass
     DOCKERFILE="Dockerfile.ssh"
-    cat <<EOF >$DOCKERFILE 
+    cat <<EOF > Dockerfiles/$DOCKERFILE 
 FROM debian:bookworm-slim
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y openssh-server && apt clean && rm -rf /var/lib/apt/lists/*
 RUN mkdir /var/run/sshd
@@ -76,7 +77,7 @@ EOF
     echo "Dockerfile.ssh criado com sucesso."
     clear
     echo "Construindo container SSH"
-    docker build -t ssh-container -f Dockerfile.ssh .
+    docker build -t ssh-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
 
     echo "Executando o container SSH"
     docker run -d --name ssh-instance -p 2222:22 ssh-container
@@ -88,7 +89,139 @@ EOF
     fi
 }
 
+create_vsftpd() {
+    clear
+    CONF="vsftpd.conf"
+    cat <<EOF > Confs/$CONF
+listen=YES
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+local_umask=022
+dirmessage_enable=YES
+use_localtime=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+chroot_local_user=YES
+secure_chroot_dir=/var/run/vsftpd/empty
+pam_service_name=vsftpd
+rsa_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+rsa_private_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+EOF
+    echo "Arquivo vsfptd.conf criado com sucesso."
+    sleep 1
+    clear
+    DOCKERFILE="Dockerfile.vsftpd"
+    cat <<EOF > Dockerfiles/$DOCKERFILE
+FROM debian:bookworm-slim
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y vsftpd && apt clean && rm -rf /var/lib/apt/lists/*
+COPY Confs/$CONF /etc/vsftpd.conf
+RUN mkdir -p /var/ftp
+RUN chown nobody:nogroup /var/ftp
+RUN chmod a-w /var/ftp
+EXPOSE 21
+CMD ["vsftpd", "/etc/vsftpd.conf"]
+EOF
+    echo "$DOCKERFILE criado com sucesso."
+    sleep 1
+
+    clear
+    echo "Construindo container vsftpd"
+    docker build -t vsftpd-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
+
+    sleep 1
+    echo "Executando container vsftpd"
+    docker run -d --name vsftpd-instance -p 21:21 -v /var/ftp:/var/ftp vsftpd-container
+
+    if docker ps | grep -q vsftpd-instance; then
+        echo "O container vsftpd foi criado com sucesso"
+    else
+        echo "Falha ao criar container vsftpd"
+    fi
+}
+
+create_proftpd() {
+    clear
+    CONF="proftpd.conf"
+    cat <<EOF > Confs/$CONF
+ServerName "FTP Server"
+ServerType standalone
+DefaultServer on
+Port 21
+Umask 022
+MaxInstances 30
+User nobody
+Group nogroup
+DefaultRoot ~
+EOF
+    echo "$CONF criado com sucesso"
+    sleep 1
+    clear
+    DOCKERFILE="Dockerfile.proftpd"
+    cat <<EOF > Dockerfiles/$DOCKERFILE
+FROM debian:bookworm-slim
+RUN apt update && DEBIAN_FRONTEND=noninteractve apt install -y proftpd && apt clean && rm -rf /var/lib/apt/lists/*
+COPY $CONF /etc/proftpd/proftpd.conf
+EXPOSE 21
+CMD ["proftpd", "--nodaemon"]
+EOF
+    echo "$DOCKERFILE criado com sucesso"
+    sleep 1
+    clear
+
+    echo "Construindo container proftpd"
+    docker build -t proftpd-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
+    clear
+    echo "Escreva o caminho do diretório a ser compartilhado"
+    read caminho
+
+    if [ -z "$caminho" ]; then
+        echo "O caminho do diretório a ser compartilhado não foi fornecido"
+        return 1
+    elif [ ! -d "$caminho" ]; then
+        echo "O caminho fornecido não é um diretório válido."
+        return 1
+    fi
+    echo "Executando o container ProFTPD..."
+
+    docker run -d --name proftpd-instance -p 21:21 -v $caminho:/var/ftp proftpd-container
+
+    if docker ps | grep -q proftpd-instance; then
+        echo "O container ProFTPD foi criado com sucesso."
+    else
+        echo "Falha ao criar o container ProFTPD."
+    fi
+}
+
+create_lamp(){
+    clear
+    DOCKERFILE="Dockerfile.lamp"
+    cat <<EOF > Dockerfiles/$DOCKERFILE
+FROM debian:bookworm-slim
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y apache2 mysql-server php php-mysql && apt clean && rm -rf /var/lib/apt/lists/*
+EXPOSE 80
+CMD ["apachectl", "-D", "FOREGROUND"]
+EOF
+    echo "$DOCKERFILE criado com sucesso."
+    sleep 1
+
+    clear
+    echo "Construindo container LAMP"
+    docker build -t lamp-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
+
+    clear
+    echo "Executando container LAMP"
+    docker run -d --name lamp-instance -p 80:80 lamp-container
+    if docker ps | grep -q lamp-instance; then
+        echo "O container LAMP foi criado com sucesso."
+    else
+        echo "Falha ao criar o container LAMP"
+    fi
+}
+
 container_create() {
+    mkdir Dockerfiles
+    mkdir Confs
     clear
     echo "╔═══════════════════════════╗"
     echo "║      CRIAR CONTAINER      ║"
