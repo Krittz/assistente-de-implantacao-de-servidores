@@ -1,4 +1,5 @@
 #!/bin/bash
+
 RESET="\e[0m"
 RED="\e[91m"
 GREEN="\e[92m"
@@ -13,7 +14,7 @@ PISCAR="\e[5m"
 create_samba() {
     clear
     SMBCONF="smb.conf"
-    cat <<EOF > Confs/$SMBCONF
+    cat <<EOF >Confs/$SMBCONF
 [global]
     workgroup = WORKGROUP
     server string = Samba Server %v
@@ -26,7 +27,7 @@ create_samba() {
 EOF
     clear
     DOCKERFILE="Dockerfile.samba"
-    cat <<EOF > Dockerfiles/$DOCKERFILE
+    cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
 RUN apt update && apt install -y --no-install-recommends samba && apt clean && rm -rf /var/lib/apt/lists/*
 EXPOSE 137/udp 138/udp 139/tcp 445/tcp
@@ -65,7 +66,7 @@ create_ssh() {
     echo -e "${BOLD} Qual a senha deseja configurar para o root do ssh: ${RESET}"
     read pass
     DOCKERFILE="Dockerfile.ssh"
-    cat <<EOF > Dockerfiles/$DOCKERFILE 
+    cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y openssh-server && apt clean && rm -rf /var/lib/apt/lists/*
 RUN mkdir /var/run/sshd
@@ -92,7 +93,7 @@ EOF
 create_vsftpd() {
     clear
     CONF="vsftpd.conf"
-    cat <<EOF > Confs/$CONF
+    cat <<EOF >Confs/$CONF
 listen=YES
 anonymous_enable=NO
 local_enable=YES
@@ -112,7 +113,7 @@ EOF
     sleep 1
     clear
     DOCKERFILE="Dockerfile.vsftpd"
-    cat <<EOF > Dockerfiles/$DOCKERFILE
+    cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y vsftpd && apt clean && rm -rf /var/lib/apt/lists/*
 COPY Confs/$CONF /etc/vsftpd.conf
@@ -143,7 +144,7 @@ EOF
 create_proftpd() {
     clear
     CONF="proftpd.conf"
-    cat <<EOF > Confs/$CONF
+    cat <<EOF >Confs/$CONF
 ServerName "FTP Server"
 ServerType standalone
 DefaultServer on
@@ -158,7 +159,7 @@ EOF
     sleep 1
     clear
     DOCKERFILE="Dockerfile.proftpd"
-    cat <<EOF > Dockerfiles/$DOCKERFILE
+    cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
 RUN apt update && DEBIAN_FRONTEND=noninteractve apt install -y proftpd && apt clean && rm -rf /var/lib/apt/lists/*
 COPY $CONF /etc/proftpd/proftpd.conf
@@ -193,10 +194,10 @@ EOF
     fi
 }
 
-create_lamp(){
+create_lamp() {
     clear
     DOCKERFILE="Dockerfile.lamp"
-    cat <<EOF > Dockerfiles/$DOCKERFILE
+    cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y apache2 mysql-server php php-mysql && apt clean && rm -rf /var/lib/apt/lists/*
 EXPOSE 80
@@ -275,11 +276,12 @@ docker_install() {
         fi
         clear
         echo "Adicionando chave GPG do repositório Docker..."
-        curl -y -fsSl https://download.docker.com/linux/debian/gpg | gpg -y --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
         if [ $? -ne 0 ]; then
             echo "Erro ao adicionar chave GPG do repositório Docker. Verifique sua conexão com a internet e tente novamente."
             return
         fi
+
         clear
         echo "Adicionando repositório Docker ao sistema..."
         echo "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
@@ -307,13 +309,14 @@ docker_install() {
         fi
 
     fi
+
 }
 docker_uninstall() {
     clear
     docker --version
     if [ $? -eq 0 ]; then
         echo "Desinstalando Docker"
-        apt purge docker-ce docker-ce-cli containerd.io && apt autoremove -y
+        apt purge docker-ce docker-ce-cli containerd.io -y && apt autoremove -y
         apt clean
         groupdel docker
     else
@@ -333,36 +336,41 @@ docker_menu() {
     read -p "OPÇÃO >>> " op
     case $op in
     1) docker_install ;;
+    2) docker_uninstall ;;
+    0) return ;;
+    *) echo "Opção inválida" ;;
     esac
 }
 # .........................::: FIM DA MANIPULAÇÃO DO DOCKER :::.........................
 
 menu() {
-    clear
-    echo "╔═══════════════════════════╗"
-    echo "║        MENU PRINCIPAL     ║"
-    echo "╠═══════════════════════════╣"
-    echo "║ [1] - Docker              ║"
-    echo "║ [2] - Criar container     ║"
-    echo "║ [3] - Listar containers   ║"
-    echo "║ [4] - Iniciar container   ║"
-    echo "║ [5] - Parar container     ║"
-    echo "║ [6] - Remover container   ║"
-    echo "║ [0] - Sair                ║"
-    echo "╚═══════════════════════════╝"
-    echo -e "\n"
-    echo -n "OPÇÃO >>> "
-    read op
-    case $op in
-    1) docker_menu ;;
-    2) container_create ;;
-    3) list ;;
-    4) start ;;
-    5) stop ;;
-    6) remove ;;
-    0) exit 0 ;;
-    *) echo "Opção inválida" ;;
-    esac
+    while true; do
+        clear
+        echo "╔═══════════════════════════╗"
+        echo "║        MENU PRINCIPAL     ║"
+        echo "╠═══════════════════════════╣"
+        echo "║ [1] - Docker              ║"
+        echo "║ [2] - Criar container     ║"
+        echo "║ [3] - Listar containers   ║"
+        echo "║ [4] - Iniciar container   ║"
+        echo "║ [5] - Parar container     ║"
+        echo "║ [6] - Remover container   ║"
+        echo "║ [0] - Sair                ║"
+        echo "╚═══════════════════════════╝"
+        echo -e "\n"
+        echo -n "OPÇÃO >>> "
+        read op
+        case $op in
+        1) docker_menu ;;
+        2) container_create ;;
+        3) list ;;
+        4) start ;;
+        5) stop ;;
+        6) remove ;;
+        0) exit 0 ;;
+        *) echo "Opção inválida" ;;
+        esac
+    done
 }
 
 if [ "$(id -u)" -ne 0 ]; then
