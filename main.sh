@@ -9,6 +9,20 @@ BOLD="\e[1m"
 BLUE="\e[34m"
 MAGENTA="\e[35m"
 PISCAR="\e[5m"
+# .........................::: LISTAGEM DE CONTAINERS :::.........................
+list_containers(){
+    echo -e "$BOLD ========================Containers em execução======================== $RESET"
+    docker ps
+    echo ""
+    echo ""
+    echo -e "$BOLD ========================Todos containers======================== $RESET"
+    docker ps -a
+    echo ""
+    echo ""
+    echo ""
+    echo ""
+
+}
 
 # .........................::: CRIAÇÃO DE CONTAINERS :::.........................
 create_samba() {
@@ -59,7 +73,6 @@ EOF
     fi
 }
 
-
 create_ssh() {
     clear
     echo -e "${BOLD} Qual a senha deseja configurar para o root do ssh: ${RESET}"
@@ -90,7 +103,7 @@ EOF
 }
 
 create_vsftpd() {
-    clear
+
     CONF="vsftpd.conf"
     cat <<EOF >Confs/$CONF
 listen=YES
@@ -110,7 +123,7 @@ rsa_private_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
 EOF
     echo "Arquivo vsfptd.conf criado com sucesso."
     sleep 1
-    clear
+
     DOCKERFILE="Dockerfile.vsftpd"
     cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
@@ -125,7 +138,6 @@ EOF
     echo "$DOCKERFILE criado com sucesso."
     sleep 1
 
-    clear
     echo "Construindo container vsftpd"
     docker build -t vsftpd-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
 
@@ -139,39 +151,39 @@ EOF
         echo "Falha ao criar container vsftpd"
     fi
 }
-
 create_proftpd() {
-    clear
+    # Nome do arquivo de configuração do ProFTPD
     CONF="proftpd.conf"
-    cat <<EOF >Confs/$CONF
-ServerName "FTP Server"
-ServerType standalone
-DefaultServer on
-Port 21
-Umask 022
-MaxInstances 30
-User nobody
-Group nogroup
-DefaultRoot ~
-EOF
-    echo "$CONF criado com sucesso"
-    sleep 1
-    clear
+    # Criação do Dockerfile do ProFTPD
     DOCKERFILE="Dockerfile.proftpd"
     cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
-RUN apt update && DEBIAN_FRONTEND=noninteractve apt install -y proftpd && apt clean && rm -rf /var/lib/apt/lists/*
-COPY $CONF /etc/proftpd/proftpd.conf
+
+# Instala o ProFTPD
+RUN apt update && apt install -y proftpd && apt clean && rm -rf /var/lib/apt/lists/*
+
+# Criação do arquivo de configuração do ProFTPD dentro do Dockerfile
+RUN echo 'ServerName "FTP Server"' > /etc/proftpd/proftpd.conf \
+    && echo 'ServerType standalone' >> /etc/proftpd/proftpd.conf \
+    && echo 'DefaultServer on' >> /etc/proftpd/proftpd.conf \
+    && echo 'Port 21' >> /etc/proftpd/proftpd.conf \
+    && echo 'Umask 022' >> /etc/proftpd/proftpd.conf \
+    && echo 'MaxInstances 30' >> /etc/proftpd/proftpd.conf \
+    && echo 'User nobody' >> /etc/proftpd/proftpd.conf \
+    && echo 'Group nogroup' >> /etc/proftpd/proftpd.conf \
+    && echo 'DefaultRoot ~' >> /etc/proftpd/proftpd.conf
+
 EXPOSE 21
 CMD ["proftpd", "--nodaemon"]
 EOF
+
     echo "$DOCKERFILE criado com sucesso"
     sleep 1
-    clear
 
-    echo "Construindo container proftpd"
+    echo "Construindo container ProFTPD"
     docker build -t proftpd-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
-    clear
+
+    # Verifica se o caminho do diretório é válido
     echo "Escreva o caminho do diretório a ser compartilhado"
     read caminho
 
@@ -182,8 +194,8 @@ EOF
         echo "O caminho fornecido não é um diretório válido."
         return 1
     fi
-    echo "Executando o container ProFTPD..."
 
+    echo "Executando o container ProFTPD..."
     docker run -d --name proftpd-instance -p 21:21 -v $caminho:/var/ftp proftpd-container
 
     if docker ps | grep -q proftpd-instance; then
@@ -193,8 +205,53 @@ EOF
     fi
 }
 
+create_vsftpd() {
+    CONF="vsftpd.conf"
+
+    DOCKERFILE="Dockerfile.vsftpd"
+    rm -f Dockerfiles/$DOCKERFILE  # Remove o Dockerfile se já existir
+
+    cat <<EOF >Dockerfiles/$DOCKERFILE
+FROM debian:bookworm-slim
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y vsftpd && apt clean && rm -rf /var/lib/apt/lists/*
+
+# Criação do arquivo de configuração do VsFTPD dentro do Dockerfile
+RUN echo 'listen=YES' > /etc/vsftpd.conf \
+    && echo 'anonymous_enable=NO' >> /etc/vsftpd.conf \
+    && echo 'local_enable=YES' >> /etc/vsftpd.conf \
+    && echo 'write_enable=YES' >> /etc/vsftpd.conf \
+    && echo 'local_umask=022' >> /etc/vsftpd.conf \
+    && echo 'dirmessage_enable=YES' >> /etc/vsftpd.conf \
+    && echo 'use_localtime=YES' >> /etc/vsftpd.conf \
+    && echo 'xferlog_enable=YES' >> /etc/vsftpd.conf \
+    && echo 'connect_from_port_20=YES' >> /etc/vsftpd.conf \
+    && echo 'chroot_local_user=YES' >> /etc/vsftpd.conf \
+    && echo 'secure_chroot_dir=/var/run/vsftpd/empty' >> /etc/vsftpd.conf \
+    && echo 'pam_service_name=vsftpd' >> /etc/vsftpd.conf \
+    && echo 'rsa_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem' >> /etc/vsftpd.conf \
+    && echo 'rsa_private_key_file=/etc/ssl/private/ssl-cert-snakeoil.key' >> /etc/vsftpd.conf
+
+RUN mkdir -p /var/ftp
+RUN chown nobody:nogroup /var/ftp
+RUN chmod a-w /var/ftp
+EXPOSE 2121
+CMD ["vsftpd", "/etc/vsftpd.conf"]
+EOF
+
+    echo "Construindo container vsftpd"
+    docker build -t vsftpd-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
+
+    echo "Executando container vsftpd"
+    docker run -d --name vsftpd-instance -p 2121:2121 -v /var/ftp:/var/ftp vsftpd-container
+
+    if docker ps | grep -q vsftpd-instance; then
+        echo "O container vsftpd foi criado com sucesso"
+    else
+        echo "Falha ao criar container vsftpd"
+    fi
+}
 create_lamp() {
-    clear
+
     DOCKERFILE="Dockerfile.lamp"
     cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
@@ -205,11 +262,9 @@ EOF
     echo "$DOCKERFILE criado com sucesso."
     sleep 1
 
-    clear
     echo "Construindo container LAMP"
     docker build -t lamp-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
 
-    clear
     echo "Executando container LAMP"
     docker run -d --name lamp-instance -p 80:80 lamp-container
     if docker ps | grep -q lamp-instance; then
@@ -228,22 +283,20 @@ container_create() {
     echo "╠═══════════════════════════╣"
     echo "║ [1] - Samba               ║"
     echo "║ [2] - Apache              ║"
-    echo "║ [3] - Nginx               ║"
-    echo "║ [4] - SSH                 ║"
-    echo "║ [5] - ProFPTD             ║"
-    echo "║ [6] - VsFTPD              ║"
-    echo "║ [7] - Lamp                ║"
+    echo "║ [3] - SSH                 ║"
+    echo "║ [4] - ProFTPD             ║"
+    echo "║ [5] - VsFPTD              ║"
+    echo "║ [6] - LAMP                ║"
     echo "║ [0] - Voltar              ║"
     echo "╚═══════════════════════════╝"
     read op
     case $op in
     1) create_samba ;;
     2) create_apache ;;
-    3) create_nginx ;;
-    4) create_ssh ;;
-    5) create_proftpd ;;
-    6) create_vsftpd ;;
-    7) create_lamp ;;
+    3) create_ssh ;;
+    4) create_proftpd ;;
+    5) create_vsftpd ;;
+    6) create_lamp ;;
     0) return ;;
     *) echo "Erro: Opção inválida" ;;
     esac
@@ -344,7 +397,7 @@ docker_menu() {
 
 menu() {
     while true; do
-        clear
+
         echo "╔═══════════════════════════╗"
         echo "║        MENU PRINCIPAL     ║"
         echo "╠═══════════════════════════╣"
@@ -362,7 +415,7 @@ menu() {
         case $op in
         1) docker_menu ;;
         2) container_create ;;
-        3) list ;;
+        3) list_containers ;;
         4) start ;;
         5) stop ;;
         6) remove ;;

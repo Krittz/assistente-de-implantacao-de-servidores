@@ -1,0 +1,11 @@
+FROM debian:bookworm-slim
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y vsftpd && apt clean && rm -rf /var/lib/apt/lists/*
+
+# Criação do arquivo de configuração do VsFTPD dentro do Dockerfile
+RUN echo 'listen=YES' > /etc/vsftpd.conf     && echo 'anonymous_enable=NO' >> /etc/vsftpd.conf     && echo 'local_enable=YES' >> /etc/vsftpd.conf     && echo 'write_enable=YES' >> /etc/vsftpd.conf     && echo 'local_umask=022' >> /etc/vsftpd.conf     && echo 'dirmessage_enable=YES' >> /etc/vsftpd.conf     && echo 'use_localtime=YES' >> /etc/vsftpd.conf     && echo 'xferlog_enable=YES' >> /etc/vsftpd.conf     && echo 'connect_from_port_20=YES' >> /etc/vsftpd.conf     && echo 'chroot_local_user=YES' >> /etc/vsftpd.conf     && echo 'secure_chroot_dir=/var/run/vsftpd/empty' >> /etc/vsftpd.conf     && echo 'pam_service_name=vsftpd' >> /etc/vsftpd.conf     && echo 'rsa_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem' >> /etc/vsftpd.conf     && echo 'rsa_private_key_file=/etc/ssl/private/ssl-cert-snakeoil.key' >> /etc/vsftpd.conf
+
+RUN mkdir -p /var/ftp
+RUN chown nobody:nogroup /var/ftp
+RUN chmod a-w /var/ftp
+EXPOSE 2121
+CMD ["vsftpd", "/etc/vsftpd.conf"]
