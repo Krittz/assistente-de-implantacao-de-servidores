@@ -1,0 +1,9 @@
+FROM debian:bookworm-slim
+RUN apt update && apt install -y --no-install-recommends samba && apt clean && rm -rf /var/lib/apt/lists/*
+EXPOSE 137/udp 138/udp 139/tcp 445/tcp
+
+# Criação do arquivo smb.conf dentro do Dockerfile
+RUN echo "[global]" > /etc/samba/smb.conf     && echo "    workgroup = WORKGROUP" >> /etc/samba/smb.conf     && echo "    server string = Samba Server %v" >> /etc/samba/smb.conf     && echo "    netbios name = samba-server" >> /etc/samba/smb.conf     && echo "    security = user" >> /etc/samba/smb.conf     && echo "[shared]" >> /etc/samba/smb.conf     && echo "    path = /samba" >> /etc/samba/smb.conf     && echo "    read only = no" >> /etc/samba/smb.conf     && echo "    guest ok = yes" >> /etc/samba/smb.conf
+
+VOLUME /samba
+CMD ["smbd", "--foreground", "--no-process-group"]

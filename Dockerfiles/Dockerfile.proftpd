@@ -1,0 +1,5 @@
+FROM debian:bookworm-slim
+RUN apt update && DEBIAN_FRONTEND=noninteractve apt install -y proftpd && apt clean && rm -rf /var/lib/apt/lists/*
+COPY proftpd.conf /etc/proftpd/proftpd.conf
+EXPOSE 21
+CMD ["proftpd", "--nodaemon"]

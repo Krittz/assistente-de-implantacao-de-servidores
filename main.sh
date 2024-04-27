@@ -12,34 +12,32 @@ PISCAR="\e[5m"
 
 # .........................::: CRIAÇÃO DE CONTAINERS :::.........................
 create_samba() {
-    clear
-    SMBCONF="smb.conf"
-    cat <<EOF >Confs/$SMBCONF
-[global]
-    workgroup = WORKGROUP
-    server string = Samba Server %v
-    netbios name = samba-server
-    security = user
-[shared]
-    path = /samba
-    read only = no
-    guest ok = yes
-EOF
-    clear
     DOCKERFILE="Dockerfile.samba"
     cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
 RUN apt update && apt install -y --no-install-recommends samba && apt clean && rm -rf /var/lib/apt/lists/*
 EXPOSE 137/udp 138/udp 139/tcp 445/tcp
-COPY smb.conf /etc/samba/smb.conf
+
+# Criação do arquivo smb.conf dentro do Dockerfile
+RUN echo "[global]" > /etc/samba/smb.conf \
+    && echo "    workgroup = WORKGROUP" >> /etc/samba/smb.conf \
+    && echo "    server string = Samba Server %v" >> /etc/samba/smb.conf \
+    && echo "    netbios name = samba-server" >> /etc/samba/smb.conf \
+    && echo "    security = user" >> /etc/samba/smb.conf \
+    && echo "[shared]" >> /etc/samba/smb.conf \
+    && echo "    path = /samba" >> /etc/samba/smb.conf \
+    && echo "    read only = no" >> /etc/samba/smb.conf \
+    && echo "    guest ok = yes" >> /etc/samba/smb.conf
+
 VOLUME /samba
 CMD ["smbd", "--foreground", "--no-process-group"]
 EOF
+
     echo "Dockerfile.samba criado com sucesso!"
 
     echo "Construindo container samba"
     docker build -t samba-container -f Dockerfiles/$DOCKERFILE Dockerfiles/
-    clear
+
     echo "Escreva o caminho do diretório a ser compartilhado"
     read caminho
 
@@ -60,6 +58,7 @@ EOF
         echo "Falha ao criar o container Samba."
     fi
 }
+
 
 create_ssh() {
     clear
