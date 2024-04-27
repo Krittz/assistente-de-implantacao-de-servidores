@@ -255,7 +255,7 @@ create_lamp() {
     DOCKERFILE="Dockerfile.lamp"
     cat <<EOF >Dockerfiles/$DOCKERFILE
 FROM debian:bookworm-slim
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y apache2 mysql-server php php-mysql && apt clean && rm -rf /var/lib/apt/lists/*
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y apache2 mariadb-server php php-mysql && apt clean && rm -rf /var/lib/apt/lists/*
 EXPOSE 80
 CMD ["apachectl", "-D", "FOREGROUND"]
 EOF
