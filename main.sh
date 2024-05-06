@@ -9,7 +9,7 @@ BOLD="\e[1m"
 BLUE="\e[34m"
 MAGENTA="\e[35m"
 PISCAR="\e[5m"
-# .........................::: LISTAGEM DE CONTAINERS :::.........................
+# .........................::: MANIPULAÇÃO DE CONTAINERS :::.........................
 list_containers(){
     echo -e "$BOLD ========================Containers em execução======================== $RESET"
     docker ps
@@ -22,6 +22,35 @@ list_containers(){
     echo ""
     echo ""
 
+}
+start_samba (){
+    if
+    docker start samba-instance
+}
+container_start() {
+    clear
+    echo "╔═══════════════════════════╗"
+    echo "║      CRIAR CONTAINER      ║"
+    echo "╠═══════════════════════════╣"
+    echo "║ [1] - Samba               ║"
+    echo "║ [2] - Apache              ║"
+    echo "║ [3] - SSH                 ║"
+    echo "║ [4] - ProFTPD             ║"
+    echo "║ [5] - VsFPTD              ║"
+    echo "║ [6] - LAMP                ║"
+    echo "║ [0] - Voltar              ║"
+    echo "╚═══════════════════════════╝"
+    read op
+    case $op in
+    1) start_samba ;;
+    2) start_apache ;;
+    3) start_ssh ;;
+    4) start_proftpd ;;
+    5) start_vsftpd ;;
+    6) start_lamp ;;
+    0) return ;;
+    *) echo "Erro: Opção inválida" ;;
+    esac
 }
 
 # .........................::: CRIAÇÃO DE CONTAINERS :::.........................
@@ -368,6 +397,7 @@ docker_uninstall() {
     docker --version
     if [ $? -eq 0 ]; then
         echo "Desinstalando Docker"
+        rm /usr/share/keyrings/docker-archive-keyring.gpg
         apt purge docker-ce docker-ce-cli containerd.io -y && apt autoremove -y
         apt clean
         groupdel docker
@@ -375,7 +405,6 @@ docker_uninstall() {
         echo "Docker não esta instalado"
     fi
 }
-
 docker_menu() {
     clear
     echo "╔═══════════════════════════╗"
