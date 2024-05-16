@@ -23,9 +23,7 @@ list_containers(){
     echo ""
 
 }
-start_samba (){
-    if
-    docker start samba-instance
+start_samba (){	
 }
 container_start() {
     clear
