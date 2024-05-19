@@ -23,8 +23,6 @@ list_containers(){
     echo ""
 
 }
-start_samba (){	
-}
 container_start() {
     clear
     echo "╔═══════════════════════════╗"
