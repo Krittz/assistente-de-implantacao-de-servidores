@@ -376,7 +376,7 @@ docker_install() {
         read usr
         usermod -aG docker $usr
         chown $usr:docker /var/run/docker.sock
-        systemctl restart docker
+        /etc/init.d/docker restart
         clear
         docker --version
         if [ $? -eq 0 ]; then
