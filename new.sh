@@ -148,8 +148,8 @@ echo -e "║                                        ║"
 echo -e "╚════════════════════════════════════════╝"
 sleep 0.5
     echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Criar                               ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Ver                                 ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                               ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                                 ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}3. ${RED}Sair                                ${BLUE}║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo -ne "Escolha uma opção: "
@@ -159,11 +159,11 @@ read -r option
 
 case $option in
 	1)
-		echo "Criar"
+		docker_install
 		sleep 1
 		;;
 	2)
-		echo "Ver"
+		docker_uninstall
 		sleep 1
 		;;
 	3)
