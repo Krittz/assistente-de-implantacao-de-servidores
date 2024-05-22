@@ -84,7 +84,9 @@ function docker_install() {
         read usr
         usermod -aG docker $usr
         sleep 5  # Adiciona uma pausa para garantir que o Docker crie o socket
-        chown $usr:docker /var/run/docker.sock
+        if [ -e /var/run/docker.sock ]; then
+            chown $usr:docker /var/run/docker.sock
+        fi
         /etc/init.d/docker restart
         echo ""
         sleep 1
