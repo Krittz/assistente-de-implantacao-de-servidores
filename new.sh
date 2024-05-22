@@ -83,6 +83,7 @@ function docker_install() {
         echo -ne "${GREEN}${BLINK} ->${NC} Nome do usuário que irá utilizar o Docker: "
         read usr
         usermod -aG docker $usr
+        sleep 5  # Adiciona uma pausa para garantir que o Docker crie o socket
         chown $usr:docker /var/run/docker.sock
         /etc/init.d/docker restart
         echo ""
