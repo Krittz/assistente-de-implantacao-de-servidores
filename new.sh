@@ -1,13 +1,140 @@
 #!/bin/bash
 
-RED='\033[0;31m'
+ERROR='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+WARNING='\033[1;33m'
 BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
+SUCCESS='\033[0;36m'
 WHITE='\033[1;37m'
 NC='\033[0m'
+BOLD='\033[1m'
+NEWLINE='\n'
+BLINK='\033[5M'
+
+
+function docker_install(){
+
+    echo "${NEWLINE}${NEWLINE}"    
+    docker --version
+    
+    if ! [ $? -eq 0 ]; then    
+
+    echo "${NEWLINE}${NEWLINE}"
+        sleep 1
+        echo -e "${BLUE}-----------------------------------------${NC}"
+        echo -e "   ${BOLD}Instalação do Docker!${NC}     "
+        echo -e "${BLUE}-----------------------------------------${NC}"
+        sleep 1
+        echo "${NEWLINE}${NEWLINE}"
+
+        echo -e "${MAGENTA} ----- [${NC} Atualizando sistema ${MAGENTA}] -----${NC}${NEWLINE}"
+        sleep 1
+        apt update && apt upgrade -y
+        echo ""
+        sleep 1
+        if [ $? -ne 0 ]; then
+            echo -e " ${ERROR}<<< ERRO >>> :${NC} Erro ao autilizar sistema. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
+            sleep 1
+            return
+        fi
+
+        echo -e "${MAGENTA} ----- [${NC} Instalando pacotes necessários ${MAGENTA}] ----- ${NC}${NEWLINE}"
+        sleep 1
+        apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
+        echo ""
+        sleep 1
+        if [ $? -ne 0 ]; then
+            echo -e " ${ERROR}<<< ERRO >>> :${NC} Erro ao instalar pacotes necessários. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
+            sleep 1
+            return
+        fi
+
+        echo -e "${MAGENTA} ----- [${NC} Adicionando chave GPG do repositório Docker ${MAGENTA}] ----- ${NC}${NEWLINE}"
+        sleep 1
+        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        echo ""
+        sleep 1
+        if [ $? -ne 0 ]; then
+            echo -e " ${ERROR}<<< ERRO >>> :${NC} Erro ao adicionar chave GPG no repositório Docker.  Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
+            sleep 1            
+            return
+        fi
+
+        echo -e "${MAGENTA} ----- [${NC} Adicionando repositório Docker ao sistema ${MAGENTA}] ----- ${NC}${NEWLINE}"
+        sleep 1
+        echo "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+        apt update
+        echo ""
+        sleep 1
+        
+        echo -e "${MAGENTA} ----- [${NC} Instalando Docker Engine ${MAGENTA}] ----- ${NC}${NEWLINE}"
+        sleep 1
+        apt install -y docker-ce docker-ce-cli containerd.io
+        echo ""
+        sleep 1
+        if [ $? -ne 0 ]; then
+            echo -e " ${ERROR}<<< ERRO >>> :${NC} Erro ao instalar Docker Engine.  Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
+            sleep 1
+            return
+        fi
+    
+        sleep 1
+        echo -e "${MAGENTA} ----- [${NC} Adicionando usuário ao grupo docker ${MAGENTA}] ----- ${NC}${NEWLINE}"
+        sleep 1
+        echo -e "${GREEN}${BLINK} ->${NC}Nome do usuário que ira utilizar o Docker: "
+        read usr
+        usermod -aG docker $usr
+        chwon $usr:docker /var/run/docker.sock
+        /etc/init.d/docker restart
+        echo ""
+        sleep 1
+
+        docker --version
+            if [ $? -eq 0 ]; then
+                echo -e "${SUCCESS}.........................................${NC}"
+                echo -e "${BOLD} ...::: Docker instalado com sucesso! :::... ${NC}"
+                echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
+                sleep 1
+            else 
+                echo -e " ${ERROR}<<< ERRO >>> :${NC} Erro ao instalar Docker Engine.  Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
+                sleep 1
+            fi
+    else
+    echo "${NEWLINE}${NEWLINE}"
+
+        echo -e "${SUCCESS}.........................................${NC}"
+        echo -e "${BOLD} ...::: Docker já está instalado! :::... ${NC}"
+        echo -e "${SUCCESS}.........................................${NC}"
+
+    echo "${NEWLINE}${NEWLINE}"
+
+    fi 
+}
+
+function docker_uninstall(){
+    docker --version
+    if [ $? eq 0 ]; then
+        sleep 1
+        echo -e "${MAGENTA} ----- [${NC} Desinstalando Docker ${MAGENTA}] ----- ${NC}${NEWLINE}"
+        sleep 1
+        rm /usr/share/keyrings/docker-archive-keyring.gpg
+        apt purge docker-ce docker-ce-cli containerd.io -y && apt autoremove -y
+        apt clean
+        groupdel docker
+        echo -e "${NEWLINE}${NEWLINE}"
+        echo -e "${SUCCESS}.........................................${NC}"
+        echo -e "${BOLD}    ...::: Docker desinstalado! :::... ${NC}"
+        echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
+        sleep 1
+    else
+
+        echo -e "${SUCCESS}.........................................${NC}"
+        echo -e "${BOLD} ...::: Docker não está instalado! :::... ${NC}"
+        echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
+        sleep 1
+    fi
+}
 
 show_menu(){
 
