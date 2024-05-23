@@ -13,11 +13,9 @@ NEWLINE='\n'
 BLINK='\033[5m'
 
 function docker_install() {
-
     echo -e "${NEWLINE}${NEWLINE}"
     docker --version
     if ! [ $? -eq 0 ]; then
-
         echo -e "${NEWLINE}${NEWLINE}"
         sleep 1
         echo -e "${BLUE}-----------------------------------------${NC}"
@@ -29,8 +27,6 @@ function docker_install() {
         echo -e "${MAGENTA} ----- [${NC} Atualizando sistema ${MAGENTA}] -----${NC}${NEWLINE}"
         sleep 1
         apt update && apt upgrade -y
-        echo ""
-        sleep 1
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao atualizar o sistema. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
             sleep 1
@@ -40,8 +36,6 @@ function docker_install() {
         echo -e "${MAGENTA} ----- [${NC} Instalando pacotes necessários ${MAGENTA}] -----${NC}${NEWLINE}"
         sleep 1
         apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
-        echo ""
-        sleep 1
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao instalar pacotes necessários. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
             sleep 1
@@ -51,8 +45,6 @@ function docker_install() {
         echo -e "${MAGENTA} ----- [${NC} Adicionando chave GPG do repositório Docker ${MAGENTA}] -----${NC}${NEWLINE}"
         sleep 1
         curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-        echo ""
-        sleep 1
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao adicionar chave GPG no repositório Docker. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
             sleep 1
@@ -63,51 +55,47 @@ function docker_install() {
         sleep 1
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
         apt update
-        echo ""
         sleep 1
 
         echo -e "${MAGENTA} ----- [${NC} Instalando Docker Engine ${MAGENTA}] -----${NC}${NEWLINE}"
         sleep 1
         apt install -y docker-ce docker-ce-cli containerd.io
-        echo ""
-        sleep 1
-	docker --version
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao instalar Docker Engine. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
             sleep 1
             return
         fi
 
-        sleep 1
         echo -e "${MAGENTA} ----- [${NC} Adicionando usuário ao grupo docker ${MAGENTA}] -----${NC}${NEWLINE}"
         sleep 1
 
-	/etc/init.d/docker  restart
-	if [ $? -ne 0 ]; then
-		echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao reiniciar o serviço Docker."
-		return
-	fi
-	sleep 2
-	echo -ne "${GREEN}${BLINK} ->${NC} Nome do usuário que irá utilizar o Docker: "
-        read usr
-	usermod -aG docker $usr
-	if [ $? -ne 0 ]; then
-		echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao adicionar usuário:${ERROR} ${usr} ${NC} ao grupo docker."
-		return
-	fi
-
-	if [ -e /var/run/docker.sock ]; then
-		chown $usr:docker /var/run/docker.sock
-		if [ $? -ne 0 ]; then
-			echo -e "${ERROR}<<< ERRO >>>: ${NC} Erro ao mudar permissão do arquivo  /var/run/docker.sock"
-			return
-		fi
-	else
-		echo -e "${ERROR}<<< ERRO >>>:${NC} O arquivo /var/run/docker.sock não existe."
-		return
-	fi
         /etc/init.d/docker restart
-        echo ""
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao reiniciar o serviço Docker."
+            return
+        fi
+        sleep 2
+
+        echo -ne "${GREEN}${BLINK} ->${NC} Nome do usuário que irá utilizar o Docker: "
+        read usr
+        usermod -aG docker $usr
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao adicionar usuário: ${usr} ao grupo docker."
+            return
+        fi
+
+        if [ -e /var/run/docker.sock ]; then
+            chown $usr:docker /var/run/docker.sock
+            if [ $? -ne 0 ]; then
+                echo -e "${ERROR}<<< ERRO >>>: ${NC} Erro ao mudar permissão do arquivo /var/run/docker.sock"
+                return
+            fi
+        else
+            echo -e "${ERROR}<<< ERRO >>>:${NC} O arquivo /var/run/docker.sock não existe."
+            return
+        fi
+
+        /etc/init.d/docker restart
         sleep 1
 
         docker --version
@@ -116,17 +104,15 @@ function docker_install() {
             echo -e "${BOLD} ...::: Docker instalado com sucesso! :::... ${NC}"
             echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
             sleep 1
-        else 
+        else
             echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao instalar Docker Engine. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
             sleep 1
         fi
     else
         echo -e "${NEWLINE}${NEWLINE}"
-
         echo -e "${SUCCESS}.........................................${NC}"
         echo -e "${BOLD} ...::: Docker já está instalado! :::... ${NC}"
         echo -e "${SUCCESS}.........................................${NC}"
-
         echo -e "${NEWLINE}${NEWLINE}"
     fi
 }
