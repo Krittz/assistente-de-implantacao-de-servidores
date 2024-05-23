@@ -97,7 +97,7 @@ function docker_install() {
             return
         fi
 
-        /etc.init.d/docker restart
+        /etc/init.d/docker restart
         sleep 1
 
         docker --version
