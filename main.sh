@@ -402,7 +402,7 @@ function docker_install() {
             return
         fi
 
-        # Mudança de permissão do socket Docker
+      
         if [ -e /var/run/docker.sock ]; então
             chown $usr:docker /var/run/docker.sock
             chmod 660 /var/run/docker.sock
@@ -419,12 +419,19 @@ function docker_install() {
         sleep 1
 
         docker --version
-        if [ $? -eq 0 ]; então
+        if [ $? -eq 0 ]; then
             echo -e "${SUCCESS}.........................................${NC}"
             echo -e "${BOLD} ...::: Docker instalado com sucesso! :::... ${NC}"
             echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
-            echo -e "${BOLD} ...::: Por favor, faça logout e login novamente para aplicar as mudanças de grupo. :::... ${NC}"
-            sleep 1
+            
+            echo -ne "${GREEN}${BLINK} ->${NC} Deseja reiniciar o shell agora para aplicar as mudanças? (s/n): "
+            read resposta
+            if [ "$resposta" = "s" ]; then
+                su - $usr -c "newgrp docker"
+            else
+                echo -e "${BOLD} ...::: Por favor, faça logout e login novamente para aplicar as mudanças de grupo. :::... ${NC}"
+            fi
+
         else
             echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao instalar Docker Engine. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
             sleep 1
