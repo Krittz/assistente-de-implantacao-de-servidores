@@ -12,6 +12,7 @@ BOLD='\033[1m'
 NEWLINE='\n'
 BLINK='\033[5m'
 
+
 function docker_install() {
     echo -e "${NEWLINE}${NEWLINE}"
     docker --version
@@ -86,6 +87,7 @@ function docker_install() {
 
         if [ -e /var/run/docker.sock ]; then
             chown $usr:docker /var/run/docker.sock
+            chmod 660 /var/run/docker.sock
             if [ $? -ne 0 ]; then
                 echo -e "${ERROR}<<< ERRO >>>: ${NC} Erro ao mudar permissão do arquivo /var/run/docker.sock"
                 return
@@ -95,7 +97,7 @@ function docker_install() {
             return
         fi
 
-        /etc/init.d/docker restart
+        /etc.init.d/docker restart
         sleep 1
 
         docker --version
@@ -103,6 +105,15 @@ function docker_install() {
             echo -e "${SUCCESS}.........................................${NC}"
             echo -e "${BOLD} ...::: Docker instalado com sucesso! :::... ${NC}"
             echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
+            
+            echo -ne "${GREEN}${BLINK} ->${NC} Deseja reiniciar o shell agora para aplicar as mudanças? (s/n): "
+            read resposta
+            if [ "$resposta" = "s" ]; then
+                su - $usr -c "newgrp docker"
+            else
+                echo -e "${BOLD} ...::: Por favor, faça logout e login novamente para aplicar as mudanças de grupo. :::... ${NC}"
+            fi
+
             sleep 1
         else
             echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao instalar Docker Engine. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
