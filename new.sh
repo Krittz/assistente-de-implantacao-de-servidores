@@ -71,6 +71,7 @@ function docker_install() {
         apt install -y docker-ce docker-ce-cli containerd.io
         echo ""
         sleep 1
+	docker --version
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao instalar Docker Engine. Verifique sua conexão com a internet e tente novamente.${NEWLINE}"
             sleep 1
@@ -80,13 +81,31 @@ function docker_install() {
         sleep 1
         echo -e "${MAGENTA} ----- [${NC} Adicionando usuário ao grupo docker ${MAGENTA}] -----${NC}${NEWLINE}"
         sleep 1
-        echo -ne "${GREEN}${BLINK} ->${NC} Nome do usuário que irá utilizar o Docker: "
+
+	/etc/init.d/docker  restart
+	if [ $? -ne 0 ]; then
+		echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao reiniciar o serviço Docker."
+		return
+	fi
+	sleep 2
+	echo -ne "${GREEN}${BLINK} ->${NC} Nome do usuário que irá utilizar o Docker: "
         read usr
-        usermod -aG docker $usr
-        sleep 5  # Adiciona uma pausa para garantir que o Docker crie o socket
-        if [ -e /var/run/docker.sock ]; then
-            chown $usr:docker /var/run/docker.sock
-        fi
+	usermod -aG docker $usr
+	if [ $? -ne 0 ]; then
+		echo -e "${ERROR}<<< ERRO >>>:${NC} Erro ao adicionar usuário:${ERROR} ${usr} ${NC} ao grupo docker."
+		return
+	fi
+
+	if [ -e /var/run/docker.sock ]; then
+		chown $usr:docker /var/run/docker.sock
+		if [ $? -ne 0 ]; then
+			echo -e "${ERROR}<<< ERRO >>>: ${NC} Erro ao mudar permissão do arquivo  /var/run/docker.sock"
+			return
+		fi
+	else
+		echo -e "${ERROR}<<< ERRO >>>:${NC} O arquivo /var/run/docker.sock não existe."
+		return
+	fi
         /etc/init.d/docker restart
         echo ""
         sleep 1
@@ -148,8 +167,8 @@ echo -e "║                                        ║"
 echo -e "╚════════════════════════════════════════╝"
 sleep 0.5
     echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                               ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                                 ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                     ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}3. ${RED}Sair                                ${BLUE}║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo -ne "Escolha uma opção: "
