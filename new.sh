@@ -13,6 +13,36 @@ NEWLINE='\n'
 BLINK='\033[5m'
 
 
+# ------------------------------------------------------------------------------------
+# .................................. DOCKER COMPOSE ..................................
+# ------------------------------------------------------------------------------------
+
+function docker_compose_install(){
+    sleep 1
+    echo -e "${NEWLINE}${MAGENTA} ----- [${NC} Instalando Docker Compose ${MAGENTA}] -----${NC}${NEWLINE}"
+    apt install -y docker-compose-plugin
+    if [ $? -eq 0 ]; then
+        echo -e "${NEWLINE}${SUCCESS}.........................................${NC}"
+        echo -e "${BOLD} ...::: Compose instalado com sucesso! :::... ${NC}"
+        echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
+        sleep 1
+    else
+        echo -e "${NEWLINE}${ERROR}<<< ERRO >>>:${NC} Erro ao instalar Docker Compose. Verifique sua conexão com a internet e tente novamente."
+        sleep 1
+        return
+    fi
+}
+
+
+
+# ------------------------------------------------------------------------------------
+# ................................// DOCKER COMPOSE ..................................
+# ------------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------------
+# ....................................... DOCKER .....................................
+# ------------------------------------------------------------------------------------
 function docker_install() {
     echo -e "${NEWLINE}${NEWLINE}"
     docker --version
@@ -23,9 +53,9 @@ function docker_install() {
         echo -e "   ${BOLD}Instalação do Docker!${NC}     "
         echo -e "${BLUE}-----------------------------------------${NC}"
         sleep 1
-        echo -e "${NEWLINE}${NEWLINE}"
+        
 
-        echo -e "${MAGENTA} ----- [${NC} Atualizando sistema ${MAGENTA}] -----${NC}${NEWLINE}"
+        echo -e "${NEWLINE}${MAGENTA} ----- [${NC} Atualizando sistema ${MAGENTA}] -----${NC}${NEWLINE}"
         sleep 1
         apt update && apt upgrade -y
         if [ $? -ne 0 ]; then
@@ -152,6 +182,9 @@ function docker_uninstall(){
     fi
 }
 
+# ------------------------------------------------------------------------------------
+# .....................................// DOCKER .....................................
+# ------------------------------------------------------------------------------------
 show_menu(){
 
 while true; do
