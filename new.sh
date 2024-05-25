@@ -12,13 +12,124 @@ BOLD='\033[1m'
 NEWLINE='\n'
 BLINK='\033[5m'
 
+# ------------------------------------------------------------------------------------
+# .................................. APACHE ..........................................
+# ------------------------------------------------------------------------------------
+function setup_static_site(){
+    echo -e "${NEWLINE}${MAGENTA} ----- [${NC} Configurando Apache para hospedar site estático ${MAGENTA}] -----${NC}${NEWLINE}"
+    echo -ne "${BLINk}${GREEN}->${NC}Digite o caminho para os arquivos do site: "
+    read -r static_site_path
+    if [ -z "$static_site_path" ]; then
+        echo -e "${ERROR}<<< ERRO >>> :${NC} Caminho não pode ser vazio."
+        sleep 1
+        setup_static_site
+        return
+    fi
+    mkdir -p configs/apache/static_site
+    cat <<EOF > configs/apache/static_site/docker-compose.yml
+version: '3'
+services:
+    apache-static:
+        image: httpd:latest
+        volumes:
+            - ${static_site_path}:/usr/local/apache2/htdocs/
+        ports:
+            - "80:80"
+EOF
+    sleep 1
+    docker-compose -f configs/apache/static_site/docker-compose.yml up -d
+    sleep 1
+    echo -e "${SUCCESS}+ ÊXITO + :${NC} Site estático hospedado com sucesso!"
+}
 
+function setup_dynamic_site(){
+    echo -e "${NEWLINE}${MAGENTA} ----- [${NC} Configurando Apache para hospedar site dinâmico ${MAGENTA}] -----${NC}${NEWLINE}"
+    echo -ne "${BLINK}${GREEN}->${NC}Digite o caminho para os arquivos do site dinâmico: "
+    read -r dynamic_site_path
+    if [ -z "$dynamic_site_path" ]; then
+        echo -e "${ERROR}<<< ERRO >>> :${NC} Caminho não pode ser vazio."
+        sleep 1
+        setup_dynamic_site
+        return
+    fi
+    echo -ne "${BLINK}${GREEN}->${NC}Digite a versão do PHP desejada (ex: 7.4, 8.0, 8.1): "
+    read -r php_version
+     if [ -z "$php_version" ]; then
+        echo -e "${ERROR}<<< ERRO >>> :${NC} Versão do PHP não pode ser vazia."
+        sleep 1
+        setup_dynamic_site
+        return
+    fi
+    mkdir -p configs/apache/dynamic_site
+        cat <<EOF > configs/apache/dynamic_site/docker-compose.yml
+version: '3'
+services:
+    apache-dynamic:
+        image: php:${php_version}-apache
+        volumes:
+            - ${dynamic_site_path}:/var/www/html
+        ports:
+            - "80:80"
+EOF
+    sleep 1
+    docker-compose -f configs/apache/dynamic_site/docker-compose.yml up -d
+    sleep 1
+    echo -e "${SUCCESS}+ ÊXITO + :${NC} Site dinâmico hospedado com sucesso!"
+
+}
+
+
+function configure_apache_server(){
+    echo -e "${NEWLINE}${BLUE}Escolha a destinação do servidor Apache:${NC}"
+    echo -e "[${GREEN}1${NC}] . Hospedar um site estático"
+    echo -e "[${GREEN}2${NC}] . Hospedar um site dinâmico (PHP)"
+    echo -e "[${GREEN}3${NC}] . Hospedar uma API"
+    echo -e "[${GREEN}4${NC}] . Hospedar um banco de dados MySQL"
+    echo -e "[${GREEN}5${NC}] . Hospedar um banco de dados MariaDB"
+    echo -e "[${GREEN}0${NC}] . Voltar"
+    echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
+    read destination_choice
+        case $destination_choice in
+        1)
+            setup_static_site
+            sleep 1
+            ;;
+        2) 
+            setup_dynamic_site
+            sleep 1
+            ;;
+        3) 
+            setup_api
+            sleep 1
+            ;;
+        4)
+            setup_mysql
+            sleep 1
+            ;;
+        5)
+            setup_mariadb
+            sleep 1
+            ;;
+        0)
+            return
+            ;;
+        *)
+            echo -e "${WARNING} * AVISO * :${NC} Opção inválida...${NC}"
+    		sleep 1
+            configure_apache_server
+            ;;
+    esac  
+
+}
+
+# ------------------------------------------------------------------------------------
+# .................................. //APACHE ........................................
+# ------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------
 # .................................. DOCKER COMPOSE ..................................
 # ------------------------------------------------------------------------------------
 
 function docker_compose_install(){
-    sleep 1
     echo -e "${NEWLINE}${MAGENTA} ----- [${NC} Instalando Docker Compose ${MAGENTA}] -----${NC}${NEWLINE}"
     apt install -y docker-compose-plugin
     if [ $? -eq 0 ]; then
@@ -187,106 +298,105 @@ function docker_uninstall(){
 # ------------------------------------------------------------------------------------
 function show_servers_menu(){
 
-while true; do
-echo -e "${CYAN}"
-echo -e "╔════════════════════════════════════════╗"
-echo -e "║            ${YELLOW}MENU SERVIDORES${CYAN}              ║"
-echo -e "╚════════════════════════════════════════╝"
-echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Apache                     ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}2. ${GREEN}NginX                      ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Samba                      ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}4. ${GREEN}ProFTPD                    ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}5. ${GREEN}vsFTPd                     ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}0. ${RED}Voltar                                ${BLUE}║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
-echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
-read -r option
-    case $option in
-        1) 
-            show_menu_apache
-            sleep 1
-            ;;
-        2) 
-            show_menu_nginx
-            sleep 1
-            ;;
-        3) 
-            show_menu_samba
-            sleep 1
-            ;;
-        4) 
-            show_menu_proftpd
-            sleep 1
-            ;;
-        5)
-            show_menu_vsftpd
-            sleep 1
-            ;;
-        0) 
-            return 
-            ;;
-        *)
-            echo -e "${WARNING} * AVISO * :${NC} Opção inválida...${NC}"
-            sleep 1
-            ;;
+    while true; do
+    echo -e "${CYAN}"
+    echo -e "╔════════════════════════════════════════╗"
+    echo -e "║            ${YELLOW}MENU SERVIDORES${CYAN}              ║"
+    echo -e "╚════════════════════════════════════════╝"
+    echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Apache                     ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}NginX                      ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Samba                      ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}4. ${GREEN}ProFTPD                    ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}5. ${GREEN}vsFTPd                     ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}0. ${RED}Voltar                                ${BLUE}║${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+    echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
+    read -r option
+        case $option in
+            1) 
+                show_menu_apache
+                sleep 1
+                ;;
+            2) 
+                show_menu_nginx
+                sleep 1
+                ;;
+            3) 
+                show_menu_samba
+                sleep 1
+                ;;
+            4) 
+                show_menu_proftpd
+                sleep 1
+                ;;
+            5)
+                show_menu_vsftpd
+                sleep 1
+                ;;
+            0) 
+                return 
+                ;;
+            *)
+                echo -e "${WARNING} * AVISO * :${NC} Opção inválida...${NC}"
+                sleep 1
+                show_servers_menu
+                ;;
 
+        esac
 
-
-esac
-
-done
+    done
 }
 
 
 function show_menu(){
 
-while true; do
+    while true; do
 
-echo -e "${CYAN}"
-echo -e "╔════════════════════════════════════════╗"
-echo -e "║                                        ║"
-echo -e "║            ${YELLOW}MENU PRINCIPAL${CYAN}              ║"
-echo -e "║                                        ║"
-echo -e "╚════════════════════════════════════════╝"
-sleep 0.5
-echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                     ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Instalar Docker Compose             ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}4. ${GREEN}Servidores                          ${BLUE}║${NC}"
-echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                  ${BLUE}║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
-echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
+    echo -e "${CYAN}"
+    echo -e "╔════════════════════════════════════════╗"
+    echo -e "║                                        ║"
+    echo -e "║            ${YELLOW}MENU PRINCIPAL${CYAN}              ║"
+    echo -e "║                                        ║"
+    echo -e "╚════════════════════════════════════════╝"
+    sleep 0.5
+    echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                     ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Instalar Docker Compose             ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}4. ${GREEN}Servidores                          ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                  ${BLUE}║${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+    echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
 
 
-read -r option
+    read -r option
 
-case $option in
-	1)
-		docker_install
-		sleep 1
-		;;
-	2)
-		docker_uninstall
-		sleep 1
-		;;
-    3)
-        docker_compose_install
-        sleep 1
-        ;;
-	0)
-		echo "saindo..."
-		sleep 1
-		exit 0
-		;;
-	*)
-		echo -e "${WARNING} * AVISO * :${NC} Opção inválida...${NC}"
-		sleep 1
-		;;
-esac
+    case $option in
+    	1)
+    		docker_install
+    		sleep 1
+    		;;
+    	2)
+    		docker_uninstall
+    		sleep 1
+    		;;
+        3)
+            docker_compose_install
+            sleep 1
+            ;;
+    	0)
+    		echo "saindo..."
+    		sleep 1
+    		exit 0
+    		;;
+    	*)
+    		echo -e "${WARNING} * AVISO * :${NC} Opção inválida...${NC}"
+    		sleep 1
+    		;;
+    esac
 
-done
+    done
 
 }
 
