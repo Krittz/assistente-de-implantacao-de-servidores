@@ -199,7 +199,7 @@ sleep 0.5
     echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                     ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Instalar Docker Compose                  ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Instalar Docker Compose              ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                ${BLUE}║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo -ne "Escolha uma opção: "
@@ -236,27 +236,13 @@ done
 }
 
 print_welcome() {
-    prefix="Bem-vindo(a) "
-    username="$USER"
-    suffix=" ao Gerenciador de Servidores Linux! Escolha uma opção:"
-
+    prefix="Bem-vindo(a) ao Gerenciador de Servidores Linux! Escolha uma opção:"
+   
     echo -ne "${MAGENTA}"
     for ((i = 0; i < ${#prefix}; i++)); do
         echo -n "${prefix:$i:1}"
         sleep 0.03
-    done
-
-    echo -ne "${YELLOW}"
-    for ((i = 0; i < ${#username}; i++)); do
-        echo -n "${username:$i:1}"
-        sleep 0.03
-    done
-
-    echo -ne "${MAGENTA}"
-    for ((i = 0; i < ${#suffix}; i++)); do
-        echo -n "${suffix:$i:1}"
-        sleep 0.03
-    done
+    done 
 
     echo -e "${NC}\n"
 }
