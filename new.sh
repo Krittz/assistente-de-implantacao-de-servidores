@@ -185,7 +185,61 @@ function docker_uninstall(){
 # ------------------------------------------------------------------------------------
 # .....................................// DOCKER .....................................
 # ------------------------------------------------------------------------------------
-show_menu(){
+function show_servers_menu(){
+
+while true; do
+echo -e "${CYAN}"
+echo -e "╔════════════════════════════════════════╗"
+echo -e "║            ${YELLOW}MENU SERVIDORES${CYAN}              ║"
+echo -e "╚════════════════════════════════════════╝"
+echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Apache                     ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}2. ${GREEN}NginX                      ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Samba                      ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}4. ${GREEN}ProFTPD                    ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}5. ${GREEN}vsFTPd                     ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}0. ${RED}Voltar                                ${BLUE}║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
+read -r option
+    case $option in
+        1) 
+            show_menu_apache
+            sleep 1
+            ;;
+        2) 
+            show_menu_nginx
+            sleep 1
+            ;;
+        3) 
+            show_menu_samba
+            sleep 1
+            ;;
+        4) 
+            show_menu_proftpd
+            sleep 1
+            ;;
+        5)
+            show_menu_vsftpd
+            sleep 1
+            ;;
+        0) 
+            return 
+            ;;
+        *)
+            echo -e "${WARNING} * AVISO * :${NC} Opção inválida...${NC}"
+            sleep 1
+            ;;
+
+
+
+esac
+
+done
+}
+
+
+function show_menu(){
 
 while true; do
 
@@ -196,13 +250,14 @@ echo -e "║            ${YELLOW}MENU PRINCIPAL${CYAN}              ║"
 echo -e "║                                        ║"
 echo -e "╚════════════════════════════════════════╝"
 sleep 0.5
-    echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                     ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Instalar Docker Compose              ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                ${BLUE}║${NC}"
-    echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
-    echo -ne "Escolha uma opção: "
+echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                     ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Instalar Docker Compose             ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}4. ${GREEN}Servidores                          ${BLUE}║${NC}"
+echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                  ${BLUE}║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
 
 
 read -r option
@@ -226,7 +281,7 @@ case $option in
 		exit 0
 		;;
 	*)
-		echo "${RED}Opção inválida!${NC}"
+		echo -e "${WARNING} * AVISO * :${NC} Opção inválida...${NC}"
 		sleep 1
 		;;
 esac
