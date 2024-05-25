@@ -99,15 +99,15 @@ function configure_apache_server(){
             sleep 1
             ;;
         3) 
-            setup_api
+            #setup_api
             sleep 1
             ;;
         4)
-            setup_mysql
+            #setup_mysql
             sleep 1
             ;;
         5)
-            setup_mariadb
+            #setup_mariadb
             sleep 1
             ;;
         0)
@@ -319,19 +319,19 @@ function show_servers_menu(){
                 sleep 1
                 ;;
             2) 
-                show_menu_nginx
+                #show_menu_nginx
                 sleep 1
                 ;;
             3) 
-                show_menu_samba
+                #show_menu_samba
                 sleep 1
                 ;;
             4) 
-                show_menu_proftpd
+                #show_menu_proftpd
                 sleep 1
                 ;;
             5)
-                show_menu_vsftpd
+                #show_menu_vsftpd
                 sleep 1
                 ;;
             0) 
@@ -383,6 +383,10 @@ function show_menu(){
     		;;
         3)
             docker_compose_install
+            sleep 1
+            ;;
+        4)
+            show_servers_menu
             sleep 1
             ;;
     	0)
