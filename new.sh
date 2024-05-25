@@ -131,7 +131,7 @@ function configure_apache_server(){
 
 function docker_compose_install(){
     echo -e "${NEWLINE}${MAGENTA} ----- [${NC} Instalando Docker Compose ${MAGENTA}] -----${NC}${NEWLINE}"
-    apt install -y docker-compose-plugin
+    apt install -y docker-compose
     if [ $? -eq 0 ]; then
         echo -e "${NEWLINE}${SUCCESS}.........................................${NC}"
         echo -e "${BOLD} ...::: Compose instalado com sucesso! :::... ${NC}"
@@ -304,12 +304,12 @@ function show_servers_menu(){
     echo -e "║            ${YELLOW}MENU SERVIDORES${CYAN}             ║"
     echo -e "╚════════════════════════════════════════╝"
     echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Apache                             ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}5. ${GREEN}vsFTPd                             ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}NginX                              ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Samba                              ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}4. ${GREEN}ProFTPD                            ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}0. ${RED}Voltar                               ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Apache                              ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}5. ${GREEN}vsFTPd                              ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}NginX                               ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Samba                               ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}4. ${GREEN}ProFTPD                             ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}0. ${RED}Voltar                              ${BLUE}║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
     read -r option
@@ -365,7 +365,7 @@ function show_menu(){
     echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Instalar Docker Compose             ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}4. ${GREEN}Servidores                          ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                 ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                ${BLUE}║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
 
