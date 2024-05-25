@@ -199,7 +199,8 @@ sleep 0.5
     echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║ ${WHITE}1. ${GREEN}Instalar Docker                     ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}3. ${RED}Sair                                ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Instalar Docker Compose                  ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                ${BLUE}║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo -ne "Escolha uma opção: "
 
@@ -215,7 +216,11 @@ case $option in
 		docker_uninstall
 		sleep 1
 		;;
-	3)
+    3)
+        docker_compose_install
+        sleep 1
+        ;;
+	0)
 		echo "saindo..."
 		sleep 1
 		exit 0
