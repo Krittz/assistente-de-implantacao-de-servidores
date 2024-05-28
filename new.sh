@@ -131,10 +131,10 @@ function configure_apache_server(){
 
 function docker_compose_install(){
     echo -e "${NEWLINE}${MAGENTA} ----- [${NC} Instalando Docker Compose ${MAGENTA}] -----${NC}${NEWLINE}"
-    apt install -y docker-compose-plugin
+    apt install -y docker-compose
     if [ $? -eq 0 ]; then
         echo -e "${NEWLINE}${SUCCESS}.........................................${NC}"
-        echo -e "${BOLD} ...::: Compose instalado com sucesso! :::... ${NC}"
+        echo -e "${BOLD} ...::: Compose instalado! :::... ${NC}"
         echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
         sleep 1
     else
@@ -143,7 +143,21 @@ function docker_compose_install(){
         return
     fi
 }
+function docker_compose_uninstall(){
+    echo -e "${NEWLINE}${MAGENTA} ----- [${NC} Desinstalando Docker Compose ${MAGENTA}] -----${NC}${NEWLINE}"
+    apt remove -y docker-compose
+     if [ $? -eq 0 ]; then
+        echo -e "${NEWLINE}${SUCCESS}.........................................${NC}"
+        echo -e "${BOLD} ...::: Compose desinstalado! :::... ${NC}"
+        echo -e "${SUCCESS}.........................................${NC}${NEWLINE}"
+        sleep 1
+    else
+        echo -e "${NEWLINE}${ERROR}<<< ERRO >>>:${NC} Erro ao desinstalar Docker Compose."
+        sleep 1
+        return
+    fi
 
+}
 
 
 # ------------------------------------------------------------------------------------
@@ -155,12 +169,11 @@ function docker_compose_install(){
 # ....................................... DOCKER .....................................
 # ------------------------------------------------------------------------------------
 function docker_install() {
-    echo -e "${NEWLINE}${NEWLINE}"
+    echo -e "${NEWLINE}"
     docker --version
     if ! [ $? -eq 0 ]; then
-        echo -e "${NEWLINE}${NEWLINE}"
         sleep 1
-        echo -e "${BLUE}-----------------------------------------${NC}"
+        echo -e "${NEWLINE}${BLUE}-----------------------------------------${NC}"
         echo -e "   ${BOLD}Instalação do Docker!${NC}     "
         echo -e "${BLUE}-----------------------------------------${NC}"
         sleep 1
@@ -365,7 +378,7 @@ function show_menu(){
     echo -e "${BLUE}║ ${WHITE}2. ${GREEN}Desinstalar Docker                  ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}3. ${GREEN}Instalar Docker Compose             ${BLUE}║${NC}"
     echo -e "${BLUE}║ ${WHITE}4. ${GREEN}Servidores                          ${BLUE}║${NC}"
-    echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                 ${BLUE}║${NC}"
+    echo -e "${BLUE}║ ${WHITE}0. ${RED}Sair                                ${BLUE}║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
     echo -ne "${BLINk}${GREEN}->${NC}Escolha uma opção: "
 
@@ -405,6 +418,7 @@ function show_menu(){
 }
 
 print_welcome() {
+    echo -e "${NEWLINE}"
     prefix="Bem-vindo(a) ao Gerenciador de Servidores Linux! Escolha uma opção:"
    
     echo -ne "${MAGENTA}"
@@ -419,6 +433,7 @@ print_welcome() {
 
 
 if [ "$(id -u)" -ne 0 ]; then
+
 clear
 echo -e "${RED}Por favor, execute este script como root ${NC}"
 exit 1

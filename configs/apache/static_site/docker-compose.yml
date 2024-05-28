@@ -1,0 +1,8 @@
+version: '3'
+services:
+    apache-static:
+        image: httpd:latest
+        volumes:
+            - /home/cristian/Projetos/All/Calculadora:/usr/local/apache2/htdocs/
+        ports:
+            - "80:80"
