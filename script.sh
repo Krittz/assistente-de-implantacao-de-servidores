@@ -11,6 +11,99 @@ BOLD='\033[1m'
 NL='\n'
 BLINK='\033[5m'
 
+#echo -e "${NL}${MAGENTA} ...::: ${NC}${BOLD}Instalação do Docker${NC} ${MAGENTA}:::...${NC}"
+#echo -e "${NL}${BLUE} >>>${NC}${BOLD} Atualizando Sistema ${NC}${BLUE}<<<${NC}"
+#echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker á está instalado!"
+#echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao atualizar sistema. Verifique sua conexão com a internet e tente novamente."
+#echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+
+# --->>> DOCKER <<<---
+function docker_install(){
+    echo ""
+    docker --version
+    if [ $? -eq 0 ]; then
+        sleep 0.3 
+        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker já está instalado!"
+        sleep 0.3
+        return
+    else
+        echo -e "${NL}${MAGENTA} ...::: ${NC}${BOLD}Instalação do Docker${NC} ${MAGENTA}:::...${NC}"
+        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Atualizando Sistema ${NC}${BLUE}<<<${NC}"
+        apt update && apt upgrade -y
+        if [ $? -ne 0 ]; then
+            sleep 0.3
+            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao atualizar sistema. Verifique sua conexão com a internet e tente novamente."
+            sleep 0.3
+            return
+        fi
+        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Instalando pacotes necessários ${NC}${BLUE}<<<${NC}"
+        apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
+        if [ $? -ne 0 ]; then
+            sleep 0.3
+            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao instalar pacotes necessários. Verifique sua conexão com a internet e tente novamente."
+            sleep 0.3
+            return
+        fi
+        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando chave GPG do repositório Docker ${NC}${BLUE}<<<${NC}"
+        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        if [ $? -ne 0 ]; then
+            sleep 0.3
+            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao adicionar chave GPG. Verifique sua conexão com a internet e tente novamente."
+            sleep 0.3
+            return
+        fi
+        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando repositório Docker ao sistema ${NC}${BLUE}<<<${NC}"
+        echo "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
+        apt update
+
+        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Instalando Docker Engine ${NC}${BLUE}<<<${NC}"
+        apt install -y docker-ce docker-ce-cli containerd.io
+        if [ $? -ne 0 ]; then
+            sleep 0.3
+            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao instalar Docker Engine. Verifique sua conexão com a internet e tente novamente."
+            sleep 0.3
+            return
+        fi
+
+        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando usuário ao grupo Docker ${NC}${BLUE}<<<${NC}"
+        echo -ne " ${BLINK}${INPUT}↳${NC} Informe o nome do usuário que utilizará o Docker: "
+        read -r usr
+        usermod -aG docker $usr
+        chown $usr:docker /var/run/docker.sock
+        /etc/init.d/docker restart
+        docker --version
+        if [ $? -eq 0 ]; then
+            sleep 0.3
+            echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker instalado!"
+            sleep 0.3
+        else
+            sleep 0.3
+            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao instalar Docker. Verifique sua conexão com a internet e tente novamente."
+            sleep 0.3
+            return
+        fi
+    fi
+}
+function docker_uninstall(){
+    echo ""
+    docker --version
+    if ! [ $? -eq 0 ]; then
+        sleep 0.3
+        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker não está instalado!"
+        sleep 0.3
+    else
+        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Desinstalando Docker ${NC}${BLUE}<<<${NC}"
+        rm /usr/share/keyrings/docker-archive-keyring.gpg
+        apt purge docker-ce docker-ce-cli containerd.io -y && apt autoremove -y
+        apt clean
+        groupdel docker
+        sleep 0.3
+        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker desinstalado!"
+        sleep 0.3
+    fi
+}
+# --->>> //DOCKER <<<---
+
 # --->>> MENUS <<<---
 #function proftpd_menu(){}
 #function vsftpd_menu(){}
@@ -24,7 +117,7 @@ function fpt_server_menu(){
     echo -e " ##${NC} [${INPUT}3${NC}] - FileZilla    ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
     echo -e " ########################${NC}"
-    echo -ne " ${BLINK}${INPUT}>>>${NC} Selecione uma opção: "
+    echo -ne " ${BLINK}${INPUT}↳${NC} Selecione uma opção: "
     read -r server_option
 
     case $server_option in
@@ -67,7 +160,7 @@ function database_menu(){
     echo -e " ##${NC} [${INPUT}4${NC}] - SQLite        ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar        ${BLUE}##"
     echo -e " #########################${NC}"
-    echo -ne " ${BLINK}${INPUT}>>>${NC} Selecione uma opção: "
+    echo -ne " ${BLINK}${INPUT}↳${NC} Selecione uma opção: "
     read -r database_option
     case $database_option in
         1)
@@ -113,7 +206,7 @@ function web_server_menu(){
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
 
     echo -e " ########################${NC}"
-    echo -ne " ${BLINK}${INPUT}>>>${NC} Selecione uma opção: "
+    echo -ne " ${BLINK}${INPUT}↳${NC} Selecione uma opção: "
     read -r server_option
 
     case $server_option in
@@ -141,4 +234,4 @@ function web_server_menu(){
 #function main_menu(){}
 #web_server_menu
 #database_menu
-fpt_server_menu
+#fpt_server_menu
