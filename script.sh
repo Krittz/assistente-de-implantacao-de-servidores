@@ -194,10 +194,10 @@ function database_menu(){
 
 function apache_menu(){
     echo -e "${NL}${BLUE} ########################"
-    echo -e " ##              ${NC}${BOLD}APACHE${NC}${BLUE}   ##"
+    echo -e " ##         ${NC}${BOLD}APACHE${NC}${BLUE}   ##"
     echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] -         ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] -        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] -              ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] -              ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
 
     echo -e " ########################${NC}"
