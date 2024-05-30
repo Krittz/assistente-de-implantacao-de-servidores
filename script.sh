@@ -192,7 +192,18 @@ function database_menu(){
     esac
 }
 
-#function apache_menu(){}
+function apache_menu(){
+    echo -e "${NL}${BLUE} ########################"
+    echo -e " ##   ${NC}${BOLD}APACHE${NC}${BLUE}   ##"
+    echo -e " ##....................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] -        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] -        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
+
+    echo -e " ########################${NC}"
+    echo -ne " ${BLINK}${INPUT}↳${NC} Selecione uma opção: "
+    read -r server_option
+}
 #function nginx_menu(){}
 #function samba_menu(){}
 #function proftpd_menu(){}
