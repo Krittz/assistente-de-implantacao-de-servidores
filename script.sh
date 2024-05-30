@@ -246,3 +246,4 @@ function web_server_menu(){
 #web_server_menu
 #database_menu
 #fpt_server_menu
+apache_menu
