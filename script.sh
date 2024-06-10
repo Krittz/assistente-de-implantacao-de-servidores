@@ -17,6 +17,55 @@ BLINK='\033[5m'
 #echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao atualizar sistema. Verifique sua conexão com a internet e tente novamente."
 #echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
 
+# --->>> FUNÇÕES USUAIS <<<---
+function check_container_name(){
+    local container_name=$1
+    if [ -z "$container_name" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+        return 1
+    fi
+    if [ ! -z "$(docker ps -a --filter name=^/${container_name}$ --format '{{.Names}}')" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome '${container_name}' indisponível!"
+        return 1
+    else   
+        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Nome do container '${container_name}' está disponível."
+        return 0
+    fi
+}
+
+function check_and_suggest_port() {
+    local port=$1
+    local start_port=$2
+    local end_port=$3
+
+    if [ -z "$port" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Porta não pode ser vazia!"
+        return 1
+    fi
+
+    if netstat -tuln | grep -wq ":${port}\b"; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Porta ${port} indisponível!"
+        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Buscando portas disponíveis entre ${start_port} e ${end_port} ${NC}${BLUE}<<<${NC}"
+
+        for alt_port in $(seq $start_port $end_port); do
+            if ! netstat -tuln | grep -wq ":${alt_port}\b"; then
+                echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Porta alternativa sugerida: ${alt_port}"
+                echo "$alt_port"
+                return 0
+            fi
+        done
+
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nenhuma porta disponível encontrada entre ${start_port} e ${end_port}."
+        return 1
+    else
+        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Porta ${port} está disponível."
+        echo "$port"
+        return 0
+    fi
+}
+
+
+# --->>> //FUNÇÕES USUARIS <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
