@@ -43,12 +43,12 @@ function check_and_suggest_port() {
         return 1
     fi
 
-    if netstat -tuln | grep -wq ":${port}\b"; then
+    if ss -tuln | grep -wq ":${port}\b"; then
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Porta ${port} indisponível!"
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Buscando portas disponíveis entre ${start_port} e ${end_port} ${NC}${BLUE}<<<${NC}"
 
         for alt_port in $(seq $start_port $end_port); do
-            if ! netstat -tuln | grep -wq ":${alt_port}\b"; then
+            if ! ss -tuln | grep -wq ":${alt_port}\b"; then
                 echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Porta alternativa sugerida: ${alt_port}"
                 echo "$alt_port"
                 return 0
@@ -63,6 +63,7 @@ function check_and_suggest_port() {
         return 0
     fi
 }
+
 
 
 # --->>> //FUNÇÕES USUARIS <<<---
