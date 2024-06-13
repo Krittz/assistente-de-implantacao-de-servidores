@@ -63,10 +63,8 @@ function check_and_suggest_port() {
 # --->>> //FUNÇÕES USUARIS <<<---
 
 # --->>> MARIADB <<<---
-
 function create_mariadb_container() {
     local container_name
-    local db_name
     local db_user
     local db_password
 
@@ -80,9 +78,6 @@ function create_mariadb_container() {
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Nome de container inválido."
         return 1
     fi
-
-    echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados: "
-    read db_name
 
     echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
     read db_user
@@ -110,23 +105,13 @@ function create_mariadb_container() {
     # Escrever o Dockerfile para MariaDB na pasta configs
     cat > configs/Dockerfile-mariadb <<EOF
 FROM mariadb:latest
-RUN apt-get update && apt-get install -y mysql-client && rm -rf /var/lib/apt/lists/*
-ENV MYSQL_DATABASE=$db_name
-ENV MYSQL_USER=$db_user
-ENV MYSQL_PASSWORD=$db_password
-ENV MYSQL_ROOT_PASSWORD=$db_password
-COPY ./configs/db_setup.sql /docker-entrypoint-initdb.d/
+
+# Definir a senha de root do MariaDB
+ENV MARIADB_ROOT_PASSWORD=$db_password
+
+# Expor a porta padrão do MariaDB
 EXPOSE $suggested_port
 EOF
-
-    # Escrever o script SQL para inicialização do banco de dados
-    cat > configs/db_setup.sql <<SQL
-CREATE DATABASE IF NOT EXISTS $db_name;
-USE $db_name;
-CREATE USER '$db_user'@'%' IDENTIFIED BY '$db_password';
-GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'%';
-FLUSH PRIVILEGES;
-SQL
 
     # Build da imagem Docker para MariaDB
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
@@ -147,6 +132,7 @@ SQL
         return 1
     fi
 }
+
 
 
 # --->>> //MARIADB <<<---
