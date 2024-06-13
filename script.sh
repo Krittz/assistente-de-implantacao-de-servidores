@@ -39,26 +39,20 @@ function check_and_suggest_port() {
     local end_port=$3
 
     if [ -z "$port" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Porta não pode ser vazia!"
+        echo ""
         return 1
     fi
 
-    if ss -tuln | grep -wq ":${port}\b"; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Porta ${port} indisponível!"
-        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Buscando portas disponíveis entre ${start_port} e ${end_port} ${NC}${BLUE}<<<${NC}"
-
+    if ss -tuln | grep -q ":${port}\b"; then
         for alt_port in $(seq $start_port $end_port); do
-            if ! ss -tuln | grep -wq ":${alt_port}\b"; then
-                echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Porta alternativa sugerida: ${alt_port}"
+            if ! ss -tuln | grep -q ":${alt_port}\b"; then
                 echo "$alt_port"
                 return 0
             fi
         done
-
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nenhuma porta disponível encontrada entre ${start_port} e ${end_port}."
-        return 1
+        echo ""
+        return 1    
     else
-        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Porta ${port} está disponível."
         echo "$port"
         return 0
     fi
@@ -67,6 +61,96 @@ function check_and_suggest_port() {
 
 
 # --->>> //FUNÇÕES USUARIS <<<---
+
+# --->>> MARIADB <<<---
+
+function create_mariadb_container() {
+    local container_name
+    local db_name
+    local db_user
+    local db_password
+
+    # Solicitar informações do usuário
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
+
+    echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+    read container_name
+
+    if ! check_container_name "$container_name"; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Nome de container inválido."
+        return 1
+    fi
+
+    echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados: "
+    read db_name
+
+    echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+    read db_user
+
+    echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+    read -s db_password
+    echo
+
+    # Verificar se algum campo está vazio
+    if [ -z "$db_name" ] || [ -z "$db_user" ] || [ -z "$db_password" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco, usuário e senha não podem ser vazios!"
+        return 1
+    fi
+
+    # Verificar a disponibilidade da porta 3306 e sugerir uma alternativa se necessário
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
+        return 1
+    fi
+
+    # Cria um diretório configs se não existir
+    mkdir -p configs
+
+    # Escrever o Dockerfile para MariaDB na pasta configs
+    cat > configs/Dockerfile-mariadb <<EOF
+FROM mariadb:latest
+RUN apt-get update && apt-get install -y mysql-client && rm -rf /var/lib/apt/lists/*
+ENV MYSQL_DATABASE=$db_name
+ENV MYSQL_USER=$db_user
+ENV MYSQL_PASSWORD=$db_password
+ENV MYSQL_ROOT_PASSWORD=$db_password
+COPY ./configs/db_setup.sql /docker-entrypoint-initdb.d/
+EXPOSE $suggested_port
+EOF
+
+    # Escrever o script SQL para inicialização do banco de dados
+    cat > configs/db_setup.sql <<SQL
+CREATE DATABASE IF NOT EXISTS $db_name;
+USE $db_name;
+CREATE USER '$db_user'@'%' IDENTIFIED BY '$db_password';
+GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'%';
+FLUSH PRIVILEGES;
+SQL
+
+    # Build da imagem Docker para MariaDB
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    docker build -t mariadb-image -f configs/Dockerfile-mariadb .
+
+    if [ $? -ne 0 ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    # Run do container Docker para MariaDB
+    docker run -d --name $container_name -p $suggested_port:3306 mariadb-image
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
+}
+
+
+# --->>> //MARIADB <<<---
+
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
@@ -116,7 +200,7 @@ function docker_install(){
         fi
 
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando usuário ao grupo Docker ${NC}${BLUE}<<<${NC}"
-        echo -ne " ${BLINK}${INPUT}↳${NC} Informe o nome do usuário que utilizará o Docker: "
+        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário que utilizará o Docker: "
         read -r usr
         usermod -aG docker $usr
         chown $usr:docker /var/run/docker.sock
@@ -167,7 +251,7 @@ function fpt_server_menu(){
     echo -e " ##${NC} [${INPUT}3${NC}] - FileZilla    ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
     echo -e " ########################${NC}"
-    echo -ne " ${BLINK}${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r server_option
 
     case $server_option in
@@ -210,7 +294,7 @@ function database_menu(){
     echo -e " ##${NC} [${INPUT}4${NC}] - SQLite        ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar        ${BLUE}##"
     echo -e " #########################${NC}"
-    echo -ne " ${BLINK}${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r database_option
     case $database_option in
         1)
@@ -219,7 +303,7 @@ function database_menu(){
             ;;
         2)
             sleep 0.3
-           echo "mariadb_menu"
+            create_mariadb_container
             ;;
         3)
             sleep 0.3
@@ -251,7 +335,7 @@ function apache_menu(){
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
 
     echo -e " ########################${NC}"
-    echo -ne " ${BLINK}${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r server_option
 }
 #function nginx_menu(){}
@@ -267,7 +351,7 @@ function web_server_menu(){
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
 
     echo -e " ########################${NC}"
-    echo -ne " ${BLINK}${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r server_option
 
     case $server_option in
@@ -294,6 +378,6 @@ function web_server_menu(){
 
 #function main_menu(){}
 #web_server_menu
-#database_menu
+database_menu
 #fpt_server_menu
-apache_menu
+#apache_menu
