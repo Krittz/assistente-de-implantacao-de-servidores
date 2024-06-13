@@ -1,7 +1,7 @@
 FROM mariadb:latest
 
 # Definir a senha de root do MariaDB
-ENV MARIADB_ROOT_PASSWORD=cristian
+ENV MARIADB_ROOT_PASSWORD=test
 
 # Expor a porta padrão do MariaDB
 EXPOSE 3307

@@ -25,13 +25,14 @@ function check_container_name(){
         return 1
     fi
     if [ ! -z "$(docker ps -a --filter name=^/${container_name}$ --format '{{.Names}}')" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome '${container_name}' indisponível!"
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome '${container_name}' indisponível! Tente novamente. "
         return 1
     else   
         echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Nome do container '${container_name}' está disponível."
         return 0
     fi
 }
+
 
 function check_and_suggest_port() {
     local port=$1
@@ -68,17 +69,19 @@ function create_mariadb_container() {
     local db_user
     local db_password
 
-    # Solicitar informações do usuário
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
+    # Loop para solicitar um nome de container válido
+    while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
+        
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
 
-    echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
-    read container_name
+        if check_container_name "$container_name"; then
+            break  # Sai do loop se o nome do container for válido
+        fi
+    done
 
-    if ! check_container_name "$container_name"; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Nome de container inválido."
-        return 1
-    fi
-
+    # Solicitar informações restantes do usuário
     echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
     read db_user
 
@@ -87,8 +90,8 @@ function create_mariadb_container() {
     echo
 
     # Verificar se algum campo está vazio
-    if [ -z "$db_name" ] || [ -z "$db_user" ] || [ -z "$db_password" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco, usuário e senha não podem ser vazios!"
+    if [ -z "$db_user" ] || [ -z "$db_password" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
         return 1
     fi
 
@@ -132,9 +135,6 @@ EOF
         return 1
     fi
 }
-
-
-
 # --->>> //MARIADB <<<---
 
 # --->>> DOCKER <<<---
