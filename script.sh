@@ -339,6 +339,8 @@ EOF
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        sleep 0.3
+        main_menu
     else
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
         return 1
@@ -434,9 +436,7 @@ function docker_uninstall(){
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
-#function proftpd_menu(){}
-#function vsftpd_menu(){}
-#function filezilla_menu(){}
+
 function fpt_server_menu(){
     echo -e "${NL}${BLUE} ########################"
     echo -e " ##   ${NC}${BOLD}SERVIDORES FTP${NC}${BLUE}   ##"
@@ -475,10 +475,6 @@ function fpt_server_menu(){
     esac
 }
 
-#function mysql_menu(){}
-#function mariadb_menu(){}
-#function postgresql_menu(){}
-#function sqlite_menu(){}
 function database_menu(){
     echo -e "${NL}${BLUE} #########################"
     echo -e " ##   ${NC}${BOLD}BANCOS DE DADOS${NC}${BLUE}   ##"
@@ -521,22 +517,6 @@ function database_menu(){
     esac
 }
 
-function apache_menu(){
-    echo -e "${NL}${BLUE} ########################"
-    echo -e " ##      ${NC}${BOLD}APACHE${NC}${BLUE}        ##"
-    echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] -              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] -              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
-
-    echo -e " ########################${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
-    read -r server_option
-}
-#function nginx_menu(){}
-#function samba_menu(){}
-#function proftpd_menu(){}
-#function vsftpd_menu(){}
 function web_server_menu(){
     echo -e "${NL}${BLUE} ########################"
     echo -e " ##   ${NC}${BOLD}SERVIDORES WEB${NC}${BLUE}   ##"
@@ -571,8 +551,42 @@ function web_server_menu(){
     esac
 }
 
+function main_menu(){
+    echo -e "${NL}${BLUE}             ###################################"
+    echo -e "██╗███████╗  ##         ${NC}${BOLD}MENU PRINCIPAL        ${BLUE}##"
+    echo -e "██║██╔════╝  ##...............................##" 
+    echo -e "██║█████╗    ##${NC} [${INPUT}1${NC}] - Bancos de Dados         ${BLUE}##"
+    echo -e "██║██╔══╝    ##${NC} [${INPUT}2${NC}] - Servidores Web          ${BLUE}##"
+    echo -e "██║██║       ##${NC} [${INPUT}3${NC}] - Servidores FTP          ${BLUE}##"
+    echo -e "╚═╝╚═╝       ##${NC} [${INPUT}0${NC}] - Sair                    ${BLUE}##"
+    echo -e "             ###################################${NC}"      
+    echo -e "               ${INPUT}↳${NC} Selecione uma opção: "  
+    read -r menu_option
+
+    case $menu_option in
+
+        1)  sleep 0.3
+            database_menu
+            ;;
+        2)  sleep 0.3
+            web_server_menu
+            ;;
+        3)  sleep 0.3
+            fpt_server_menu
+            ;;
+        0)  sleep 0.3
+            echo -ne "${BLUE}Encerrando ...${NL}"
+            ;;
+        *)  sleep 0.3
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+            sleep 0.3
+            main_menu
+            ;;
+    esac
+}
+main_menu
 #function main_menu(){}
 #web_server_menu
-database_menu
+#database_menu
 #fpt_server_menu
 #apache_menu
