@@ -269,6 +269,83 @@ EOF
 }
 
 # --->>> //SQLITE <<<---
+
+# --->>> MYSQL <<<---
+function create_mysql_container() {
+    local container_name
+    local db_user
+    local db_password
+
+    # Loop para solicitar um nome de container válido
+    while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MySQL${NC} ${BLUE}:::...${NC}"
+        
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+
+        if check_container_name "$container_name"; then
+            break  # Sai do loop se o nome do container for válido
+        fi
+    done
+
+    # Solicitar informações restantes do usuário
+    echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+    read db_user
+
+    echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+    read -s db_password
+    echo
+
+    # Verificar se algum campo está vazio
+    if [ -z "$db_user" ] || [ -z "$db_password" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+        return 1
+    fi
+
+    # Verificar a disponibilidade da porta 3306 e sugerir uma alternativa se necessário
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
+        return 1
+    fi
+
+    # Cria um diretório configs se não existir
+    mkdir -p configs
+
+    # Escrever o Dockerfile para MySQL na pasta configs
+    cat > configs/Dockerfile-mysql <<EOF
+FROM mysql:latest
+
+# Definir variáveis de ambiente para o MySQL
+ENV MYSQL_ROOT_PASSWORD=$db_password
+ENV MYSQL_USER=$db_user
+ENV MYSQL_PASSWORD=$db_password
+
+# Expor a porta padrão do MySQL
+EXPOSE $suggested_port
+EOF
+
+    # Build da imagem Docker para MySQL
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    docker build -t mysql-image -f configs/Dockerfile-mysql .
+
+    if [ $? -ne 0 ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    # Run do container Docker para MySQL
+    docker run -d --name $container_name -p $suggested_port:3306 mysql-image
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
+}
+
+# --->>> // MYSQL <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
@@ -417,7 +494,7 @@ function database_menu(){
     case $database_option in
         1)
             sleep 0.3
-            echo "mysql_menu"
+            create_mysql_container
             ;;
         2)
             sleep 0.3

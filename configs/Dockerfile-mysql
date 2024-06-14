@@ -1,0 +1,9 @@
+FROM mysql:latest
+
+# Definir variáveis de ambiente para o MySQL
+ENV MYSQL_ROOT_PASSWORD=annelisle
+ENV MYSQL_USER=annelisle
+ENV MYSQL_PASSWORD=annelisle
+
+# Expor a porta padrão do MySQL
+EXPOSE 3309
