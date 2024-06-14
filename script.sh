@@ -58,11 +58,80 @@ function check_and_suggest_port() {
         return 0
     fi
 }
-
-
-
 # --->>> //FUNÇÕES USUARIS <<<---
+# --->>> POSTGRESQL <<<---
+function create_postgresql_container() {
+    local container_name
+    local db_user
+    local db_password
 
+    # Loop para solicitar um nome de container válido
+    while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando PostgreSQL${NC} ${BLUE}:::...${NC}"
+        
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+
+        if check_container_name "$container_name"; then
+            break  # Sai do loop se o nome do container for válido
+        fi
+    done
+
+    # Solicitar informações restantes do usuário
+    echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+    read db_user
+
+    echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+    read -s db_password
+    echo
+
+    # Verificar se algum campo está vazio
+    if [ -z "$db_user" ] || [ -z "$db_password" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+        return 1
+    fi
+
+    # Verificar a disponibilidade da porta 5432 e sugerir uma alternativa se necessário
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 5432 5432 5499); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 5432 e 5499 estão ocupadas. Não é possível criar o container."
+        return 1
+    fi
+
+    # Cria um diretório configs se não existir
+    mkdir -p configs
+
+    # Escrever o Dockerfile para PostgreSQL na pasta configs
+    cat > configs/Dockerfile-postgresql <<EOF
+FROM postgres:latest
+
+# Definir a senha do usuário postgres
+ENV POSTGRES_PASSWORD=$db_password
+
+# Expor a porta padrão do PostgreSQL
+EXPOSE $suggested_port
+EOF
+
+    # Build da imagem Docker para PostgreSQL
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    docker build -t postgresql-image -f configs/Dockerfile-postgresql .
+
+    if [ $? -ne 0 ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    # Run do container Docker para PostgreSQL
+    docker run -d --name $container_name -p $suggested_port:5432 postgresql-image
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
+}
+# --->>> //POSTGRESQL <<<---
 # --->>> MARIADB <<<---
 function create_mariadb_container() {
     local container_name
@@ -293,7 +362,7 @@ function database_menu(){
             ;;
         3)
             sleep 0.3
-            echo "postgresql_menu"
+            create_postgresql_container
             ;;
         4)
             sleep 0.3
