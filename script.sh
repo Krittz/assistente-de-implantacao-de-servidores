@@ -205,7 +205,70 @@ EOF
     fi
 }
 # --->>> //MARIADB <<<---
+# --->>> SQLITE <<<---
+function create_sqlite_container() {
+    local container_name
 
+    # Loop para solicitar um nome de container válido
+    while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SQLite${NC} ${BLUE}:::...${NC}"
+        
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+
+        if check_container_name "$container_name"; then
+            break  # Sai do loop se o nome do container for válido
+        fi
+    done
+
+    # Verificar a disponibilidade da porta 3306 e sugerir uma alternativa se necessário
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
+        return 1
+    fi
+
+    # Cria um diretório configs se não existir
+    mkdir -p configs
+
+    # Escrever o Dockerfile para SQLite na pasta configs
+    cat > configs/Dockerfile-sqlite <<EOF
+FROM alpine:latest
+
+# Instalar SQLite
+RUN apk add --no-cache sqlite
+
+# Criar um diretório para armazenar os arquivos de banco de dados
+RUN mkdir /data
+
+# Definir /data como o diretório de trabalho
+WORKDIR /data
+
+# Comando padrão para o container
+CMD ["sh", "-c", "while true; do sleep 1000; done"]
+EOF
+
+    # Build da imagem Docker para SQLite
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    docker build -t sqlite-image -f configs/Dockerfile-sqlite .
+
+    if [ $? -ne 0 ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    # Run do container Docker para SQLite
+    docker run -d --name $container_name -p $suggested_port:3306 sqlite-image
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
+}
+
+# --->>> //SQLITE <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
@@ -366,7 +429,7 @@ function database_menu(){
             ;;
         4)
             sleep 0.3
-            echo "sqlite_menu"
+            create_sqlite_container
             ;;
         0)
             sleep 0.3

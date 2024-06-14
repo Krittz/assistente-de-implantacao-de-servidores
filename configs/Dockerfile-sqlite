@@ -1,0 +1,13 @@
+FROM alpine:latest
+
+# Instalar SQLite
+RUN apk add --no-cache sqlite
+
+# Criar um diretório para armazenar os arquivos de banco de dados
+RUN mkdir /data
+
+# Definir /data como o diretório de trabalho
+WORKDIR /data
+
+# Comando padrão para o container
+CMD ["sh", "-c", "while true; do sleep 1000; done"]
