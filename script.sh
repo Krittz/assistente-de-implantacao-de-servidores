@@ -466,6 +466,7 @@ function docker_uninstall(){
         sleep 0.3
     fi
 }
+
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
@@ -501,9 +502,7 @@ function mariadb_menu(){
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
         sleep 0.3
         mariadb_menu
-        ;;
-
-    
+        ;;  
     
     esac
 }
@@ -618,7 +617,6 @@ function sqlite_menu(){
         ;;   
     esac
 }
-
 function fpt_server_menu(){
     echo -e "${NL}${BLUE} ########################"
     echo -e " ##   ${NC}${BOLD}SERVIDORES FTP${NC}${BLUE}   ##"
@@ -656,7 +654,6 @@ function fpt_server_menu(){
             ;;
     esac
 }
-
 function database_menu(){
     echo -e "${NL}${BLUE} #########################"
     echo -e " ##   ${NC}${BOLD}BANCOS DE DADOS${NC}${BLUE}   ##"
@@ -699,7 +696,6 @@ function database_menu(){
             ;;
     esac
 }
-
 function web_server_menu(){
     echo -e "${NL}${BLUE} ########################"
     echo -e " ##   ${NC}${BOLD}SERVIDORES WEB${NC}${BLUE}   ##"
@@ -733,7 +729,18 @@ function web_server_menu(){
             ;;
     esac
 }
+function docker_menu(){
+    echo -e "${NL}${BLUE} ########################"
+    echo -e " ##        ${NC}${BOLD}DOCKER${NC}${BLUE}       ##"
+    echo -e " ##....................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Instalar       ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Desinstalar    ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar         ${BLUE}##"
 
+    echo -e " ########################${NC}"
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    read -r server_option
+}
 function main_menu(){
     while true; do
         echo -e "${NL}${BLUE}             ###################################"
