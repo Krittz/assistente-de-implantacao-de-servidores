@@ -736,20 +736,39 @@ function docker_menu(){
     echo -e " ##${NC} [${INPUT}1${NC}] - Instalar       ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - Desinstalar    ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar         ${BLUE}##"
-
     echo -e " ########################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
-    read -r server_option
+    read -r docker_option
+    case $docker_option in
+        1)  sleep 0.3
+            docker_install
+            ;;
+        2)
+            sleep 0.3
+            docker_uninstall
+            ;;
+        0)
+            sleep 0.3
+            return
+            ;;
+        *)
+            sleep 0.3
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+            sleep 0.3
+            main_menu
+            ;;
+    esac
 }
 function main_menu(){
     while true; do
         echo -e "${NL}${BLUE}             ###################################"
         echo -e "██╗███████╗  ##         ${NC}${BOLD}MENU PRINCIPAL        ${BLUE}##"
         echo -e "██║██╔════╝  ##...............................##" 
-        echo -e "██║█████╗    ##${NC} [${INPUT}1${NC}] - Bancos de Dados         ${BLUE}##"
+        echo -e "██║█████╗    ##${NC} [${INPUT}1${NC}] - Docker                  ${BLUE}##"
         echo -e "██║██╔══╝    ##${NC} [${INPUT}2${NC}] - Servidores Web          ${BLUE}##"
         echo -e "██║██║       ##${NC} [${INPUT}3${NC}] - Servidores FTP          ${BLUE}##"
-        echo -e "╚═╝╚═╝       ##${NC} [${INPUT}0${NC}] - Sair                    ${BLUE}##"
+        echo -e "╚═╝╚═╝       ##${NC} [${INPUT}4${NC}] - Bancos de Dados         ${BLUE}##"
+        echo -e "             ##${NC} [${INPUT}0${NC}] - Sair                    ${BLUE}##"
         echo -e "             ###################################${NC}"      
         echo -e "               ${INPUT}↳${NC} Selecione uma opção: "  
         read -r menu_option
