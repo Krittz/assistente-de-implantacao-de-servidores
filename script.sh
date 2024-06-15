@@ -343,6 +343,7 @@ function restore_backup_mysql(){
     local container_name
     local backup_file_path
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup${NC}${BLUE} :::...${NC}"
+    echo -e " ${INPUT}↳${NC} Informe o nome do container: "
     read container_name
 
     if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
