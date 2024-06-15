@@ -777,7 +777,7 @@ function main_menu(){
 
             1)  sleep 0.3
                 clear
-                database_menu
+                docker_menu
                 ;;
             2)  sleep 0.3
                 clear
@@ -786,6 +786,10 @@ function main_menu(){
             3)  sleep 0.3
                 clear
                 fpt_server_menu
+                ;;
+            4)  slee 0.3
+                clear
+                database_menu
                 ;;
             0)  echo -ne "${BLUE}Encerrando ...${NL}"
                 sleep 0.3
