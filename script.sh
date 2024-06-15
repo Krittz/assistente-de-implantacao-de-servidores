@@ -432,10 +432,9 @@ function mariadb_menu(){
     echo -e "${NL}${BLUE} ################################################"
     echo -e " ##                   ${NC}${BOLD}MARIADB${NC}${BLUE}                  ##"
     echo -e " ##............................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo vazio        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Criar um banco de dados              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}4${NC}] - Realizar backup de um banco de dados ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
     echo -e " ################################################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
@@ -449,9 +448,6 @@ function mariadb_menu(){
         sleep 0.3
         ;;
     3)
-        sleep 0.3
-        ;;
-    4)
         sleep 0.3
         ;;
     0)
@@ -474,10 +470,9 @@ function mysql_menu(){
     echo -e "${NL}${BLUE} ################################################"
     echo -e " ##                   ${NC}${BOLD}MySQL${NC}${BLUE}                    ##"
     echo -e " ##............................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo vazio        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Criar um banco de dados              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}4${NC}] - Realizar backup de um banco de dados ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
     echo -e " ################################################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
@@ -491,9 +486,6 @@ function mysql_menu(){
         sleep 0.3
         ;;
     3)
-        sleep 0.3
-        ;;
-    4)
         sleep 0.3
         ;;
     0)
@@ -516,10 +508,9 @@ function postgre_menu(){
     echo -e "${NL}${BLUE} ################################################"
     echo -e " ##              ${NC}${BOLD}PostgreSQL${NC}${BLUE}                    ##"
     echo -e " ##............................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo vazio        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Criar um banco de dados              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}4${NC}] - Realizar backup de um banco de dados ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
     echo -e " ################################################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
@@ -533,9 +524,6 @@ function postgre_menu(){
         sleep 0.3
         ;;
     3)
-        sleep 0.3
-        ;;
-    4)
         sleep 0.3
         ;;
     0)
@@ -558,10 +546,9 @@ function sqlite_menu(){
     echo -e "${NL}${BLUE} ################################################"
     echo -e " ##                   ${NC}${BOLD}SQLite${NC}${BLUE}                   ##"
     echo -e " ##............................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo vazio        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Criar um banco de dados              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}4${NC}] - Realizar backup de um banco de dados ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
     echo -e " ################################################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
@@ -577,9 +564,6 @@ function sqlite_menu(){
     3)
         sleep 0.3
         ;;
-    4)
-        sleep 0.3
-        ;;
     0)
         sleep 0.3
         clear
@@ -593,7 +577,6 @@ function sqlite_menu(){
         ;;   
     esac
 }
-
 
 function fpt_server_menu(){
     echo -e "${NL}${BLUE} ########################"
