@@ -456,7 +456,8 @@ function mariadb_menu(){
         ;;
     0)
         sleep 0.3
-        return
+        clear
+        database_menu
         ;;
     *)
         sleep 0.3
@@ -497,7 +498,8 @@ function mysql_menu(){
         ;;
     0)
         sleep 0.3
-        return
+        clear
+        database_menu
         ;;
     *)
         sleep 0.3
@@ -510,6 +512,89 @@ function mysql_menu(){
     
     esac
 }
+function postgre_menu(){
+    echo -e "${NL}${BLUE} ################################################"
+    echo -e " ##              ${NC}${BOLD}PostgreSQL${NC}${BLUE}                    ##"
+    echo -e " ##............................................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo vazio        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Criar um banco de dados              ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}4${NC}] - Realizar backup de um banco de dados ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
+    echo -e " ################################################${NC}"
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    read -r postgre_option
+    case $postgre_option in
+    1)
+        sleep 0.3
+        create_postgre_container
+        ;;
+    2)
+        sleep 0.3
+        ;;
+    3)
+        sleep 0.3
+        ;;
+    4)
+        sleep 0.3
+        ;;
+    0)
+        sleep 0.3
+        clear
+        database_menu
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        postgre_menu
+        ;;
+
+    
+    
+    esac
+}
+function sqlite_menu(){
+    echo -e "${NL}${BLUE} ################################################"
+    echo -e " ##                   ${NC}${BOLD}SQLite${NC}${BLUE}                   ##"
+    echo -e " ##............................................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo vazio        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Criar um banco de dados              ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}4${NC}] - Realizar backup de um banco de dados ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
+    echo -e " ################################################${NC}"
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    read -r sqlite_option
+    case $sqlite_option in
+    1)
+        sleep 0.3
+        create_sqlite_container
+        ;;
+    2)
+        sleep 0.3
+        ;;
+    3)
+        sleep 0.3
+        ;;
+    4)
+        sleep 0.3
+        ;;
+    0)
+        sleep 0.3
+        clear
+        database_menu
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        sqlite_menu
+        ;;   
+    esac
+}
+
+
 function fpt_server_menu(){
     echo -e "${NL}${BLUE} ########################"
     echo -e " ##   ${NC}${BOLD}SERVIDORES FTP${NC}${BLUE}   ##"
@@ -563,23 +648,24 @@ function database_menu(){
     case $database_option in
         1)
             sleep 0.3
-            create_mysql_container
+            mysql_menu
             ;;
         2)
             sleep 0.3
-            create_mariadb_container
+            mariadb_menu
             ;;
         3)
             sleep 0.3
-            create_postgresql_container
+            postgre_menu
             ;;
         4)
             sleep 0.3
-            create_sqlite_container
+            sqlite_menu
             ;;
         0)
             sleep 0.3
-            return
+            clear
+            main_menu
             ;;
         *)
             sleep 0.3
@@ -625,37 +711,48 @@ function web_server_menu(){
 }
 
 function main_menu(){
-    echo -e "${NL}${BLUE}             ###################################"
-    echo -e "██╗███████╗  ##         ${NC}${BOLD}MENU PRINCIPAL        ${BLUE}##"
-    echo -e "██║██╔════╝  ##...............................##" 
-    echo -e "██║█████╗    ##${NC} [${INPUT}1${NC}] - Bancos de Dados         ${BLUE}##"
-    echo -e "██║██╔══╝    ##${NC} [${INPUT}2${NC}] - Servidores Web          ${BLUE}##"
-    echo -e "██║██║       ##${NC} [${INPUT}3${NC}] - Servidores FTP          ${BLUE}##"
-    echo -e "╚═╝╚═╝       ##${NC} [${INPUT}0${NC}] - Sair                    ${BLUE}##"
-    echo -e "             ###################################${NC}"      
-    echo -e "               ${INPUT}↳${NC} Selecione uma opção: "  
-    read -r menu_option
+    while true; do
+        echo -e "${NL}${BLUE}             ###################################"
+        echo -e "██╗███████╗  ##         ${NC}${BOLD}MENU PRINCIPAL        ${BLUE}##"
+        echo -e "██║██╔════╝  ##...............................##" 
+        echo -e "██║█████╗    ##${NC} [${INPUT}1${NC}] - Bancos de Dados         ${BLUE}##"
+        echo -e "██║██╔══╝    ##${NC} [${INPUT}2${NC}] - Servidores Web          ${BLUE}##"
+        echo -e "██║██║       ##${NC} [${INPUT}3${NC}] - Servidores FTP          ${BLUE}##"
+        echo -e "╚═╝╚═╝       ##${NC} [${INPUT}0${NC}] - Sair                    ${BLUE}##"
+        echo -e "             ###################################${NC}"      
+        echo -e "               ${INPUT}↳${NC} Selecione uma opção: "  
+        read -r menu_option
 
-    case $menu_option in
+        case $menu_option in
 
-        1)  sleep 0.3
-            database_menu
-            ;;
-        2)  sleep 0.3
-            web_server_menu
-            ;;
-        3)  sleep 0.3
-            fpt_server_menu
-            ;;
-        0)  sleep 0.3
-            echo -ne "${BLUE}Encerrando ...${NL}"
-            ;;
-        *)  sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-            sleep 0.3
-            main_menu
-            ;;
-    esac
+            1)  sleep 0.3
+                clear
+                database_menu
+                ;;
+            2)  sleep 0.3
+                clear
+                web_server_menu
+                ;;
+            3)  sleep 0.3
+                clear
+                fpt_server_menu
+                ;;
+            0)  echo -ne "${BLUE}Encerrando ...${NL}"
+                sleep 0.3
+                exit 0
+                ;;
+            *)  sleep 0.3
+                echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+                sleep 0.3
+                main_menu
+                ;;
+        esac
+    done
 }
-mysql_menu
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "${NL}${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Por favor execute esse script como root!${NL}"
+    exit 1
+fi
+main_menu
+
 
