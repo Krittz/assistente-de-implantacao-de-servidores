@@ -32,8 +32,6 @@ function check_container_name(){
         return 0
     fi
 }
-
-
 function check_and_suggest_port() {
     local port=$1
     local start_port=$2
@@ -59,13 +57,13 @@ function check_and_suggest_port() {
     fi
 }
 # --->>> //FUNÇÕES USUARIS <<<---
+
 # --->>> POSTGRESQL <<<---
 function create_postgresql_container() {
     local container_name
     local db_user
     local db_password
 
-    # Loop para solicitar um nome de container válido
     while true; do
         echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando PostgreSQL${NC} ${BLUE}:::...${NC}"
         
@@ -73,11 +71,10 @@ function create_postgresql_container() {
         read container_name
 
         if check_container_name "$container_name"; then
-            break  # Sai do loop se o nome do container for válido
+            break  
         fi
     done
 
-    # Solicitar informações restantes do usuário
     echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
     read db_user
 
@@ -85,23 +82,19 @@ function create_postgresql_container() {
     read -s db_password
     echo
 
-    # Verificar se algum campo está vazio
     if [ -z "$db_user" ] || [ -z "$db_password" ]; then
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
         return 1
     fi
 
-    # Verificar a disponibilidade da porta 5432 e sugerir uma alternativa se necessário
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 5432 5432 5499); then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 5432 e 5499 estão ocupadas. Não é possível criar o container."
         return 1
     fi
 
-    # Cria um diretório configs se não existir
     mkdir -p configs
 
-    # Escrever o Dockerfile para PostgreSQL na pasta configs
     cat > configs/Dockerfile-postgresql <<EOF
 FROM postgres:latest
 
@@ -112,7 +105,6 @@ ENV POSTGRES_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    # Build da imagem Docker para PostgreSQL
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
     docker build -t postgresql-image -f configs/Dockerfile-postgresql .
 
@@ -121,24 +113,29 @@ EOF
         return 1
     fi
 
-    # Run do container Docker para PostgreSQL
     docker run -d --name $container_name -p $suggested_port:5432 postgresql-image
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Banco: ${BOLD}PostgreSQL${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        sleep 0.3
+        main_menu
     else
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
         return 1
     fi
 }
 # --->>> //POSTGRESQL <<<---
+
 # --->>> MARIADB <<<---
 function create_mariadb_container() {
     local container_name
     local db_user
     local db_password
 
-    # Loop para solicitar um nome de container válido
     while true; do
         echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
         
@@ -146,11 +143,10 @@ function create_mariadb_container() {
         read container_name
 
         if check_container_name "$container_name"; then
-            break  # Sai do loop se o nome do container for válido
+            break  
         fi
     done
 
-    # Solicitar informações restantes do usuário
     echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
     read db_user
 
@@ -158,23 +154,19 @@ function create_mariadb_container() {
     read -s db_password
     echo
 
-    # Verificar se algum campo está vazio
     if [ -z "$db_user" ] || [ -z "$db_password" ]; then
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
         return 1
     fi
 
-    # Verificar a disponibilidade da porta 3306 e sugerir uma alternativa se necessário
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
         return 1
     fi
 
-    # Cria um diretório configs se não existir
     mkdir -p configs
 
-    # Escrever o Dockerfile para MariaDB na pasta configs
     cat > configs/Dockerfile-mariadb <<EOF
 FROM mariadb:latest
 
@@ -185,7 +177,6 @@ ENV MARIADB_ROOT_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    # Build da imagem Docker para MariaDB
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
     docker build -t mariadb-image -f configs/Dockerfile-mariadb .
 
@@ -194,11 +185,16 @@ EOF
         return 1
     fi
 
-    # Run do container Docker para MariaDB
     docker run -d --name $container_name -p $suggested_port:3306 mariadb-image
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Banco: ${BOLD}MariaDB${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        sleep 0.3
+        main_menu
     else
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
         return 1
@@ -209,7 +205,6 @@ EOF
 function create_sqlite_container() {
     local container_name
 
-    # Loop para solicitar um nome de container válido
     while true; do
         echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SQLite${NC} ${BLUE}:::...${NC}"
         
@@ -217,21 +212,18 @@ function create_sqlite_container() {
         read container_name
 
         if check_container_name "$container_name"; then
-            break  # Sai do loop se o nome do container for válido
+            break
         fi
     done
 
-    # Verificar a disponibilidade da porta 3306 e sugerir uma alternativa se necessário
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
         return 1
     fi
 
-    # Cria um diretório configs se não existir
     mkdir -p configs
 
-    # Escrever o Dockerfile para SQLite na pasta configs
     cat > configs/Dockerfile-sqlite <<EOF
 FROM alpine:latest
 
@@ -248,7 +240,6 @@ WORKDIR /data
 CMD ["sh", "-c", "while true; do sleep 1000; done"]
 EOF
 
-    # Build da imagem Docker para SQLite
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
     docker build -t sqlite-image -f configs/Dockerfile-sqlite .
 
@@ -257,11 +248,16 @@ EOF
         return 1
     fi
 
-    # Run do container Docker para SQLite
     docker run -d --name $container_name -p $suggested_port:3306 sqlite-image
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+         echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Banco: ${BOLD}SQLite${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        sleep 0.3
+        main_menu
     else
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
         return 1
@@ -276,7 +272,6 @@ function create_mysql_container() {
     local db_user
     local db_password
 
-    # Loop para solicitar um nome de container válido
     while true; do
         echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MySQL${NC} ${BLUE}:::...${NC}"
         
@@ -284,11 +279,10 @@ function create_mysql_container() {
         read container_name
 
         if check_container_name "$container_name"; then
-            break  # Sai do loop se o nome do container for válido
+            break 
         fi
     done
 
-    # Solicitar informações restantes do usuário
     echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
     read db_user
 
@@ -296,23 +290,19 @@ function create_mysql_container() {
     read -s db_password
     echo
 
-    # Verificar se algum campo está vazio
     if [ -z "$db_user" ] || [ -z "$db_password" ]; then
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
         return 1
     fi
 
-    # Verificar a disponibilidade da porta 3306 e sugerir uma alternativa se necessário
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
         return 1
     fi
 
-    # Cria um diretório configs se não existir
     mkdir -p configs
 
-    # Escrever o Dockerfile para MySQL na pasta configs
     cat > configs/Dockerfile-mysql <<EOF
 FROM mysql:latest
 
@@ -325,7 +315,6 @@ ENV MYSQL_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    # Build da imagem Docker para MySQL
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
     docker build -t mysql-image -f configs/Dockerfile-mysql .
 
@@ -334,11 +323,14 @@ EOF
         return 1
     fi
 
-    # Run do container Docker para MySQL
     docker run -d --name $container_name -p $suggested_port:3306 mysql-image
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Banco: ${BOLD}MySQL${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
         sleep 0.3
         main_menu
     else
@@ -436,7 +428,88 @@ function docker_uninstall(){
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
+function mariadb_menu(){
+    echo -e "${NL}${BLUE} ################################################"
+    echo -e " ##                   ${NC}${BOLD}MARIADB${NC}${BLUE}                  ##"
+    echo -e " ##............................................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo vazio        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Criar um banco de dados              ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}4${NC}] - Realizar backup de um banco de dados ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
+    echo -e " ################################################${NC}"
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    read -r mariadb_option
+    case $mariadb_option in
+    1)
+        sleep 0.3
+        create_mariadb_container
+        ;;
+    2)
+        sleep 0.3
+        ;;
+    3)
+        sleep 0.3
+        ;;
+    4)
+        sleep 0.3
+        ;;
+    0)
+        sleep 0.3
+        return
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        mariadb_menu
+        ;;
 
+    
+    
+    esac
+}
+function mysql_menu(){
+    echo -e "${NL}${BLUE} ################################################"
+    echo -e " ##                   ${NC}${BOLD}MySQL${NC}${BLUE}                    ##"
+    echo -e " ##............................................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo vazio        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Criar um banco de dados              ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}4${NC}] - Realizar backup de um banco de dados ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
+    echo -e " ################################################${NC}"
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    read -r mysql_option
+    case $mysql_option in
+    1)
+        sleep 0.3
+        create_mysql_container
+        ;;
+    2)
+        sleep 0.3
+        ;;
+    3)
+        sleep 0.3
+        ;;
+    4)
+        sleep 0.3
+        ;;
+    0)
+        sleep 0.3
+        return
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        mysql_menu
+        ;;
+
+    
+    
+    esac
+}
 function fpt_server_menu(){
     echo -e "${NL}${BLUE} ########################"
     echo -e " ##   ${NC}${BOLD}SERVIDORES FTP${NC}${BLUE}   ##"
@@ -584,9 +657,5 @@ function main_menu(){
             ;;
     esac
 }
-main_menu
-#function main_menu(){}
-#web_server_menu
-#database_menu
-#fpt_server_menu
-#apache_menu
+mysql_menu
+
