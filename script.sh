@@ -524,6 +524,7 @@ function mysql_menu(){
         ;;
     2)
         sleep 0.3
+        restore_backup_mysql
         ;;
     3)
         sleep 0.3
