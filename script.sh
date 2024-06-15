@@ -2,6 +2,7 @@
 ERROR='\033[0;31m'
 INPUT='\033[0;32m'
 WARNING='\033[1;33m'
+INFO='\033[0;33m' 
 SUCCESS='\033[0;36m'
 BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
@@ -338,7 +339,47 @@ EOF
         return 1
     fi
 }
+function restore_backup_mysql(){
+    local container_name
+    local backup_file_path
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup${NC}${BLUE} :::...${NC}"
+    read container_name
 
+    if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: o container '${container_name}' não existe."
+        return 1
+    fi
+
+    echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
+    read backup_file_path
+
+    if [ ! -f "$backup_file_path" ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+        return 1
+    fi
+
+    if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}"; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando o container..."
+        docker start "$container_name"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' ${NC}${BLUE}<<<${NC}"
+    docker exec -i "$container_name" sh -c 'exec mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD}' < "$backup_file_path"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}'."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}'."
+        return 1
+    fi
+    sleep 0.3
+    main_menu
+
+} 
 # --->>> // MYSQL <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
