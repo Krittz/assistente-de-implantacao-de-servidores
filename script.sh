@@ -731,11 +731,11 @@ function web_server_menu(){
 }
 function docker_menu(){
     echo -e "${NL}${BLUE} ########################"
-    echo -e " ##        ${NC}${BOLD}DOCKER${NC}${BLUE}       ##"
+    echo -e " ##       ${NC}${BOLD}DOCKER${NC}${BLUE}       ##"
     echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Instalar       ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Desinstalar    ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar         ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Instalar     ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Desinstalar  ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
     echo -e " ########################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r docker_option
