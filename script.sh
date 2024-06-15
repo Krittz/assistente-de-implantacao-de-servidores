@@ -342,14 +342,19 @@ EOF
 function restore_backup_mysql(){
     local container_name
     local backup_file_path
+    local database_name
+
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup${NC}${BLUE} :::...${NC}"
-    echo -e " ${INPUT}↳${NC} Informe o nome do container: "
+    echo -ne " ${INPUT}↳${NC} Informe o nome do container: "
     read container_name
 
     if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: o container '${container_name}' não existe."
         return 1
     fi
+
+    echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados: "
+    read database_name
 
     echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
     read backup_file_path
@@ -359,7 +364,7 @@ function restore_backup_mysql(){
         return 1
     fi
 
-    if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}"; then
+    if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
         echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando o container..."
         docker start "$container_name"
         if [ $? -ne 0 ]; then
@@ -368,19 +373,31 @@ function restore_backup_mysql(){
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec -i "$container_name" sh -c 'exec mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD}' < "$backup_file_path"
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando a existência do banco de dados '${database_name}' no container '${container_name}' ${NC}${BLUE}<<<${NC}"
+    db_exists=$(docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
+    if [ -z "$db_exists" ]; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${database_name}' não existe. Criando o banco de dados..."
+        docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${database_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' no banco de dados '${database_name}' ${NC}${BLUE}<<<${NC}"
+    docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MYSQL_PASSWORD} ${database_name}" < "$backup_file_path"
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}'."
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}' no banco de dados '${database_name}'."
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}'."
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}' no banco de dados '${database_name}'."
         return 1
     fi
     sleep 0.3
     main_menu
+}
 
-} 
+
 # --->>> // MYSQL <<<---
 # --->>> DOCKER <<<---
 function docker_install(){

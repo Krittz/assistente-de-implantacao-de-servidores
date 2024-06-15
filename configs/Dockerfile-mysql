@@ -6,4 +6,4 @@ ENV MYSQL_USER=cristian
 ENV MYSQL_PASSWORD=calangos
 
 # Expor a porta padrão do MySQL
-EXPOSE 3309
+EXPOSE 3307
