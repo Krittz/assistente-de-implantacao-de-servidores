@@ -396,7 +396,73 @@ function restore_backup_mysql(){
     sleep 0.3
     main_menu
 }
+function backup_mysql(){
+    local container_name
+    local db_name
+    local backup_file_path
 
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Cria Backup${NC}${BLUE} :::..."
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do container MySQL: "
+        read container_name
+        if [ -z "${container_name}" ];then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            continue
+        fi
+
+        if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕: O container '${container_name}' não existe."
+            continue
+        fi
+        break
+    done
+    
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados MySQL: "
+        read db_name
+
+        if [ -z "$db_name" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup: "
+        read backup_file_path
+
+        if [ -z "$backup_file_path" ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${backup_file_path}' não existe."
+            continue
+        fi
+        break
+    done
+
+    if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..."
+        docker start "$container_name"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando nackup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
+    docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MYSQL_PASSWORD} ${database_name}" > "$backup_file_path"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${database_name}' criado com sucesso."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${database_name}'."
+        return 1
+    fi
+
+    sleep 0.3
+    main_menu
+
+}
 
 # --->>> // MYSQL <<<---
 # --->>> DOCKER <<<---
