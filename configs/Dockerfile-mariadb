@@ -4,4 +4,4 @@ FROM mariadb:latest
 ENV MARIADB_ROOT_PASSWORD=calangos
 
 # Expor a porta padrão do MariaDB
-EXPOSE 3308
+EXPOSE 3307

@@ -323,11 +323,14 @@ function backup_mariadb() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup: "
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup (incluir o nome do arquivo): "
         read backup_file_path
 
-        if [ ! -d "$backup_file_path" ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${backup_file_path}' não existe."
+        local dir_path
+        dir_path=$(dirname "$backup_file_path")
+
+        if [ ! -d "$dir_path" ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${dir_path}' não existe."
             continue
         fi
         break
