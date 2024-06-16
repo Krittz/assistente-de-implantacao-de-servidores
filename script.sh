@@ -57,6 +57,25 @@ function check_and_suggest_port() {
         return 0
     fi
 }
+function check_container_exists() {
+    local container_name="$1"   
+    if [ ! -z "$(docker ps -a --filter name=^/${container_name}$ --format '{{.Names}}')" ]; then
+        return 0  
+    else
+        return 1  
+    fi
+}
+function check_directory_exists() {
+    local directory_path="$1"
+
+    if [ -d "$directory_path" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+
 # --->>> //FUNÇÕES USUARIS <<<---
 
 # --->>> POSTGRESQL <<<---
@@ -201,6 +220,150 @@ EOF
         return 1
     fi
 }
+function restore_backup_mariadb() {
+    local container_name
+    local backup_file_path
+    local database_name
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup MariaDB${NC}${BLUE} :::...${NC}"
+    echo -ne " ${INPUT}↳${NC} Informe o nome do container MariaDB: "
+    read container_name
+
+    if [ -z "${container_name}" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+        return 1
+    fi
+
+    if ! check_container_exists "$container_name"; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+        return 1
+    fi
+
+    echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados: "
+    read database_name
+
+    if [ -z "${database_name}" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+        return 1
+    fi
+
+    echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
+    read backup_file_path
+
+    if [ ! -f "$backup_file_path" ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+        return 1
+    fi
+
+    if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando o container..."
+        docker start "$container_name"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando a existência do banco de dados '${database_name}' no container '${container_name}' ${NC}${BLUE}<<<${NC}"
+    db_exists=$(docker exec "$container_name" sh -c "exec mysql -u root -p\${MARIADB_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
+    if [ -z "$db_exists" ]; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${database_name}' não existe. Criando o banco de dados..."
+        docker exec "$container_name" sh -c "exec mysql -u root -p\${MARIADB_ROOT_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${database_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' no banco de dados '${database_name}' ${NC}${BLUE}<<<${NC}"
+    docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MARIADB_ROOT_PASSWORD} ${database_name}" < "$backup_file_path"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}' no banco de dados '${database_name}'."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}' no banco de dados '${database_name}'."
+        return 1
+    fi
+
+    sleep 0.3
+    main_menu
+}
+
+function backup_mariadb() {
+    local container_name
+    local db_name
+    local backup_file_path
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Backup MariaDB${NC}${BLUE} :::...${NC}"
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do container MariaDB: "
+        read container_name
+        if [ -z "${container_name}" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            continue
+        fi
+
+        if ! check_container_exists "$container_name"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados MariaDB: "
+        read db_name
+
+        if [ -z "$db_name" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup: "
+        read backup_file_path
+
+        if [ -z "$backup_file_path" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Caminho para salvar o backup não pode ser vazio!"
+            continue
+        fi
+        
+        # Verifica se o diretório onde será salvo o backup existe
+        if ! check_directory_exists "$(dirname "$backup_file_path")"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
+            continue
+        fi
+
+        break
+    done
+
+    if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..."
+        docker start "$container_name"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
+    docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MARIADB_ROOT_PASSWORD} ${db_name}" > "$backup_file_path"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${db_name}'."
+        return 1
+    fi
+
+    sleep 0.3
+    main_menu
+}
+
+
 # --->>> //MARIADB <<<---
 # --->>> SQLITE <<<---
 function create_sqlite_container() {
@@ -280,7 +443,7 @@ function create_mysql_container() {
         read container_name
 
         if check_container_name "$container_name"; then
-            break 
+            break  
         fi
     done
 
@@ -339,7 +502,8 @@ EOF
         return 1
     fi
 }
-function restore_backup_mysql(){
+
+function restore_backup_mysql() {
     local container_name
     local backup_file_path
     local database_name
@@ -348,19 +512,35 @@ function restore_backup_mysql(){
     echo -ne " ${INPUT}↳${NC} Informe o nome do container: "
     read container_name
 
-    if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: o container '${container_name}' não existe."
+    if [ -z "${container_name}" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+        return 1
+    fi
+
+    if ! check_container_exists "$container_name"; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
         return 1
     fi
 
     echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados: "
     read database_name
 
+    if [ -z "${database_name}" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+        return 1
+    fi
+
     echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
     read backup_file_path
 
     if [ ! -f "$backup_file_path" ]; then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+        return 1
+    fi
+
+    # Verifica se o diretório onde será salvo o backup existe
+    if ! check_directory_exists "$(dirname "$backup_file_path")"; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
         return 1
     fi
 
@@ -374,10 +554,10 @@ function restore_backup_mysql(){
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando a existência do banco de dados '${database_name}' no container '${container_name}' ${NC}${BLUE}<<<${NC}"
-    db_exists=$(docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
+    db_exists=$(docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
     if [ -z "$db_exists" ]; then
         echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${database_name}' não existe. Criando o banco de dados..."
-        docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
+        docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${database_name}'."
             return 1
@@ -385,7 +565,7 @@ function restore_backup_mysql(){
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' no banco de dados '${database_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MYSQL_PASSWORD} ${database_name}" < "$backup_file_path"
+    docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} ${database_name}" < "$backup_file_path"
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}' no banco de dados '${database_name}'."
@@ -393,10 +573,13 @@ function restore_backup_mysql(){
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}' no banco de dados '${database_name}'."
         return 1
     fi
+
     sleep 0.3
     main_menu
 }
-function backup_mysql(){
+
+
+function backup_mysql() {
     local container_name
     local db_name
     local backup_file_path
@@ -406,12 +589,12 @@ function backup_mysql(){
     while true; do
         echo -ne " ${INPUT}↳${NC} Informe o nome do container MySQL: "
         read container_name
-        if [ -z "${container_name}" ];then
+        if [ -z "${container_name}" ]; then
             echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
             continue
         fi
 
-        if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        if ! check_container_exists "$container_name"; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕: O container '${container_name}' não existe."
             continue
         fi
@@ -437,6 +620,13 @@ function backup_mysql(){
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${backup_file_path}' não existe."
             continue
         fi
+        
+        # Verifica se o diretório onde será salvo o backup existe
+        if ! check_directory_exists "$(dirname "$backup_file_path")"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
+            continue
+        fi
+
         break
     done
 
@@ -449,20 +639,20 @@ function backup_mysql(){
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando nackup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MYSQL_PASSWORD} ${database_name}" > "$backup_file_path"
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
+    docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MYSQL_ROOT_PASSWORD} ${db_name}" > "$backup_file_path"
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${database_name}' criado com sucesso."
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${database_name}'."
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${db_name}'."
         return 1
     fi
 
     sleep 0.3
     main_menu
-
 }
+
 
 # --->>> // MYSQL <<<---
 # --->>> DOCKER <<<---
@@ -572,9 +762,11 @@ function mariadb_menu(){
         ;;
     2)
         sleep 0.3
+        restore_backup_mariadb
         ;;
     3)
         sleep 0.3
+        backup_mariadb
         ;;
     0)
         sleep 0.3
