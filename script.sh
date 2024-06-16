@@ -833,7 +833,7 @@ function postgre_menu(){
     case $postgre_option in
     1)
         sleep 0.3
-        create_postgre_container
+        create_postgresql_container
         ;;
     2)
         sleep 0.3
