@@ -289,7 +289,6 @@ function restore_backup_mariadb() {
     main_menu
 }
 
-
 function backup_mariadb() {
     local container_name
     local db_name
@@ -305,7 +304,7 @@ function backup_mariadb() {
             continue
         fi
 
-        if ! check_container_exists "$container_name"; then
+        if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
             continue
         fi
@@ -327,17 +326,10 @@ function backup_mariadb() {
         echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup: "
         read backup_file_path
 
-        if [ -z "$backup_file_path" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Caminho para salvar o backup não pode ser vazio!"
+        if [ ! -d "$backup_file_path" ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${backup_file_path}' não existe."
             continue
         fi
-        
-        # Verifica se o diretório onde será salvo o backup existe
-        if ! check_directory_exists "$(dirname "$backup_file_path")"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
-            continue
-        fi
-
         break
     done
 
@@ -351,7 +343,7 @@ function backup_mariadb() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MARIADB_ROOT_PASSWORD} ${db_name}" > "$backup_file_path"
+    docker exec "$container_name" sh -c "exec mariadb-dump -u root -p\${MARIADB_ROOT_PASSWORD} ${db_name}" > "$backup_file_path"
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
@@ -363,6 +355,7 @@ function backup_mariadb() {
     sleep 0.3
     main_menu
 }
+
 
 
 # --->>> //MARIADB <<<---
