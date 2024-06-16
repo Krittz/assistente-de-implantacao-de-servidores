@@ -612,6 +612,7 @@ function mysql_menu(){
         ;;
     3)
         sleep 0.3
+        backup_mysql
         ;;
     0)
         sleep 0.3
