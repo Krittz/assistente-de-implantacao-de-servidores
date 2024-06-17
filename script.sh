@@ -149,6 +149,82 @@ EOF
     fi
 
 }
+function restore_backup_postgresql() {
+    local container_name
+    local db_name
+    local backup_file_path
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup PostgreSQL${NC}${BLUE} :::...${NC}"
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do container PostgreSQL: "
+        read container_name
+        if [ -z "${container_name}" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            continue
+        fi
+
+        if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados PostgreSQL: "
+        read db_name
+
+        if [ -z "$db_name" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
+        read backup_file_path
+
+        if [ ! -f "$backup_file_path" ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+            continue
+        fi
+        break
+    done
+
+    if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..."
+        docker start "$container_name"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando se o banco de dados '${db_name}' existe ${NC}${BLUE}<<<${NC}"
+    if ! docker exec "$container_name" psql -U postgres -lqt | cut -d \| -f 1 | grep -qw "$db_name"; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${db_name}' não existe. Criando banco de dados..."
+        docker exec "$container_name" psql -U postgres -c "CREATE DATABASE ${db_name};"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${db_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
+    cat "$backup_file_path" | docker exec -i "$container_name" sh -c "exec psql -U postgres -d ${db_name}"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' restaurado com sucesso."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup do banco de dados '${db_name}'."
+        return 1
+    fi
+
+    sleep 0.3
+    main_menu
+}
 function backup_postgresql(){
     local container_name
     local db_name
@@ -889,6 +965,7 @@ function postgre_menu(){
         ;;
     2)
         sleep 0.3
+        restore_backup_postgresql
         ;;
     3)
         sleep 0.3
