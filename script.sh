@@ -332,8 +332,10 @@ function create_mariadb_container() {
 
     cat > configs/Dockerfile-mariadb <<EOF
 FROM mariadb:latest
-# Definir a senha de root do MariaDB
+# Definir variáveis de ambiente para o MariaDB
 ENV MARIADB_ROOT_PASSWORD=$db_password
+ENV MARIADB_USER=$db_user
+ENV MARIADB_PASSWORD=$db_password
 # Expor a porta padrão do MariaDB
 EXPOSE $suggested_port
 EOF
@@ -361,6 +363,7 @@ EOF
         return 1
     fi
 }
+
 function restore_backup_mariadb() {
     local container_name
     local backup_file_path
