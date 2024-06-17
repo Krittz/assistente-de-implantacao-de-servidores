@@ -74,9 +74,7 @@ function check_directory_exists() {
         return 1
     fi
 }
-
-
-# --->>> //FUNÇÕES USUARIS <<<---
+# --->>> //FUNÇÕES USUAIS <<<---
 
 # --->>> POSTGRESQL <<<---
 function create_postgresql_container() {
@@ -164,7 +162,7 @@ function restore_backup_postgresql() {
             continue
         fi
 
-        if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        if ! check_container_exists "${container_name}"; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
             continue
         fi
@@ -240,7 +238,7 @@ function backup_postgresql(){
             continue
         fi
 
-        if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        if ! check_container_exists "${container_name}"; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
             continue
         fi
@@ -446,7 +444,7 @@ function backup_mariadb() {
             continue
         fi
 
-        if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        if ! check_container_exists "${container_name}"; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
             continue
         fi
@@ -667,7 +665,6 @@ function restore_backup_mysql() {
         return 1
     fi
 
-    # Verifica se o diretório onde será salvo o backup existe
     if ! check_directory_exists "$(dirname "$backup_file_path")"; then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
         return 1
@@ -746,9 +743,7 @@ function backup_mysql() {
         if [ -z "$backup_file_path" ]; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${backup_file_path}' não existe."
             continue
-        fi
-        
-        # Verifica se o diretório onde será salvo o backup existe
+        fi        
         if ! check_directory_exists "$(dirname "$backup_file_path")"; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
             continue
