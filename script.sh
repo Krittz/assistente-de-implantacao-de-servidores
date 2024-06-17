@@ -147,10 +147,79 @@ EOF
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
         return 1
     fi
+
+}
+function backup_postgresql(){
+    local container_name
+    local db_name
+    local backup_file_path
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Backup PostgreSQL${NC}${BLUE} :::...${NC}"
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do container PostgreSQL: "
+        read container_name
+        if [ -z "${container_name}" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            continue
+        fi
+
+        if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}↳${BOLD} Informe o nome do banco de dados PostgreSQL: "
+        read db_name
+
+        if [ -z "$db_name" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup (incluir nome do arquivo):"
+        read backup_file_path
+
+        local dir_path
+        dir_path=$(dirname "$backup_file_path")
+
+        if [ ! -d "$dir_path" ]; then
+            echo -e"${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${dir_path}' não existe."
+            continue
+        fi
+        break
+    done
+
+    if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..." 
+        docker start "$container_name"
+        if [ $? -ne 0 ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            return 1
+        fi
+    fi
+
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
+    docker exec "$container_name" sh -c "exec pg_dump -U postgres ${db_name}" > "$backup_file_path"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${db_name}'."
+        return 1
+    fi
+    sleep 0.3 
+    main_menu
 }
 # --->>> //POSTGRESQL <<<---
 
-# --->>> MARIADB <<<---
+# --->>> MARIADB <<<----
 function create_mariadb_container() {
     local container_name
     local db_user
@@ -189,10 +258,8 @@ function create_mariadb_container() {
 
     cat > configs/Dockerfile-mariadb <<EOF
 FROM mariadb:latest
-
 # Definir a senha de root do MariaDB
 ENV MARIADB_ROOT_PASSWORD=$db_password
-
 # Expor a porta padrão do MariaDB
 EXPOSE $suggested_port
 EOF
@@ -288,7 +355,6 @@ function restore_backup_mariadb() {
     sleep 0.3
     main_menu
 }
-
 function backup_mariadb() {
     local container_name
     local db_name
@@ -358,10 +424,8 @@ function backup_mariadb() {
     sleep 0.3
     main_menu
 }
-
-
-
 # --->>> //MARIADB <<<---
+
 # --->>> SQLITE <<<---
 function create_sqlite_container() {
     local container_name
@@ -387,16 +451,12 @@ function create_sqlite_container() {
 
     cat > configs/Dockerfile-sqlite <<EOF
 FROM alpine:latest
-
 # Instalar SQLite
 RUN apk add --no-cache sqlite
-
 # Criar um diretório para armazenar os arquivos de banco de dados
 RUN mkdir /data
-
 # Definir /data como o diretório de trabalho
 WORKDIR /data
-
 # Comando padrão para o container
 CMD ["sh", "-c", "while true; do sleep 1000; done"]
 EOF
@@ -424,7 +484,6 @@ EOF
         return 1
     fi
 }
-
 # --->>> //SQLITE <<<---
 
 # --->>> MYSQL <<<---
@@ -466,12 +525,10 @@ function create_mysql_container() {
 
     cat > configs/Dockerfile-mysql <<EOF
 FROM mysql:latest
-
 # Definir variáveis de ambiente para o MySQL
 ENV MYSQL_ROOT_PASSWORD=$db_password
 ENV MYSQL_USER=$db_user
 ENV MYSQL_PASSWORD=$db_password
-
 # Expor a porta padrão do MySQL
 EXPOSE $suggested_port
 EOF
@@ -499,7 +556,6 @@ EOF
         return 1
     fi
 }
-
 function restore_backup_mysql() {
     local container_name
     local backup_file_path
@@ -574,8 +630,6 @@ function restore_backup_mysql() {
     sleep 0.3
     main_menu
 }
-
-
 function backup_mysql() {
     local container_name
     local db_name
@@ -610,7 +664,7 @@ function backup_mysql() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup: "
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup (incluir o nome do arquivo): "
         read backup_file_path
 
         if [ -z "$backup_file_path" ]; then
@@ -649,9 +703,8 @@ function backup_mysql() {
     sleep 0.3
     main_menu
 }
-
-
 # --->>> // MYSQL <<<---
+
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
@@ -737,7 +790,6 @@ function docker_uninstall(){
         sleep 0.3
     fi
 }
-
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
@@ -840,6 +892,7 @@ function postgre_menu(){
         ;;
     3)
         sleep 0.3
+        backup_postgresql
         ;;
     0)
         sleep 0.3
