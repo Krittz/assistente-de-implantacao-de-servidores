@@ -855,15 +855,15 @@ function docker_uninstall(){
 
 # --->>> MENUS <<<---
 function apache_menu(){
-    echo -e "${NL}${BLUE} ##########################################"
-    echo -e " ##                   ${NC}${BOLD}APACHE2${NC}${BLUE}            ##"
+    echo -e "${NL}${BLUE} ####################################"
+    echo -e " ##                 ${NC}${BOLD}APACHE2${NC}${BLUE}          ##"
     echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Hospedar um site estático        ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Proxy reverso para APIs          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                           ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo    ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Hospedar um site estático  ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Proxy reverso para APIs    ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                     ${BLUE}##"
 
-    echo -e " #################################################${NC}"
+    echo -e " ##########################################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r apache_option
     case $apache_option in
