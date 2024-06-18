@@ -856,7 +856,7 @@ function docker_uninstall(){
 # --->>> MENUS <<<---
 function apache_menu(){
     echo -e "${NL}${BLUE} ######################################"
-    echo -e " ##                 ${NC}${BOLD}APACHE2${NC}${BLUE}          ##"
+    echo -e " ##              ${NC}${BOLD}APACHE2${NC}${BLUE}             ##"
     echo -e " ##..................................##"
     echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo    ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - Hospedar um site estático  ${BLUE}##"
