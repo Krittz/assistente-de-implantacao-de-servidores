@@ -718,54 +718,121 @@ function backup_mysql() {
 # --->>> // MYSQL <<<---
 
 # --->>> APACHE2 <<<---
-function create_apache(){
+function apache_static_site(){
     local container_name
-    local suggested_port
-
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Apache2${NC}${BLUE} :::...${NC}"
+    local site_directory
 
     while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Container Apache${NC} ${BLUE}:::...${NC}"
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
+
         if check_container_name "$container_name"; then
             break
         fi
     done
-   if ! suggested_port=$(check_and_suggest_port 80 8080 8099); then
+
+    while true; do 
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do diretório do site estático: "
+        read site_directory
+
+        if check_directory_exists "$site_directory"; then
+            break
+        else 
+           echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${site_directory}' não existe. Tente novamente."
+        fi
+    done
+
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 8080 8099); then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão ocupadas. Não é possível criar o container."
         return 1
     fi
-    mkdir -p configs
-
-        cat > configs/Dockerfile-apache <<EOF
-        FROM httpd:latest
-        EXPOSE $suggested_port
-EOF
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
-    docker build -t apache-image -f configs/Dockerfile-apache .
-
-    if [ $? -ne 0 ]; then 
-     echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
-        return 1
-    fi
-
-    docker run -d --name $container_name -p $suggested_port:80 apache-image
+     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando e iniciando container Apache${NC} ${BLUE}:::...${NC}"
+    docker run -d --name "$container_name" -p $suggested_port:80 -v "$site_directory":/usr/local/apache2/htdocs/ httpd:2.4
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
         echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Servidor: ${BOLD}Apache${NC}"
         echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-        slee 0.3
+        sleep 0.3
         main_menu
     else
-       echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
-       return 1
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
+}
+# --->>> // APACHE2 <<<---
+# --->>> NGINX <<<---
+function reverse_proxy_nginx(){
+    local container_name
+    local upstream_url
+    while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Nginx (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+
+        if check_container_name "$container_name"; then
+            break
+        fi
+    done
+
+    echo -ne " ${INPUT}↳${NC} Informe a URL do upstream da API (ex: http://endereco-da-api:porta): "
+    read upstream_url
+
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 8080 8099); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão indisponíveis. Não é possível criar o container."
+        return 1
     fi
 
-}
+    mkdir -p configs
 
-# --->>> // APACHE2 <<<---
+    cat > configs/nginx.conf <<EOF
+events {}
+
+http {
+    server {
+        listen 80;
+        location / {
+            proxy_pass $upstream_url;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Real-IP \$remote_addr;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto \$scheme;
+        }
+    }
+}
+EOF
+
+    cat > configs/Dockerfile-nginx << EOF
+FROM nginx:latest
+COPY configs/nginx.conf /etc/nginx/nginx.conf
+EOF
+
+    echo -e "${NL}${BLUE} ...:::${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} :::...${NC}"
+    docker build -t nginx-image -f configs/Dockerfile-nginx .
+
+    if [ $? -ne 0 ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    docker run -d --name $container_name -p $suggested_port:80 nginx-image
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Proxy reverso para: ${BOLD}$upstream_url${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        sleep 0.3
+        main_menu
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
+}
+# --->>> //NGINX <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
@@ -854,43 +921,37 @@ function docker_uninstall(){
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
-function apache_menu(){
+function web_menu(){
     echo -e "${NL}${BLUE} ######################################"
-    echo -e " ##              ${NC}${BOLD}APACHE2${NC}${BLUE}             ##"
+    echo -e " ##            ${NC}${BOLD}WEB SERVERS${NC}${BLUE}           ##"
     echo -e " ##..................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo    ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Hospedar um site estático  ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Proxy reverso para APIs    ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Hospedar um site estático  ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Proxy reverso para APIs    ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                     ${BLUE}##"
-
     echo -e " ######################################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
-    read -r apache_option
-    case $apache_option in
+    read -r web_option
+    case $web_option in
     1)
         sleep 0.3
-        create_apache
+        apache_static_site
         ;;
     2)
         sleep 0.3
-        echo "Hospedar site estático"
+        reverse_proxy_nginx
         ;;
-    3)
-        sleep 0.3
-        echo "Proxy reverso"
-        ;;
+    
     0)
         sleep 0.3
         clear
-        web_server_menu
+        main_menu
         ;;
     *)
     sleep 0.3
     echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
     sleep 0.3
-    apache_menu
-    ;;  
-    
+    web_menu
+    ;;     
     esac
 
 }
@@ -967,9 +1028,6 @@ function mysql_menu(){
         sleep 0.3
         mysql_menu
         ;;
-
-    
-    
     esac
 }
 function postgre_menu(){
@@ -1007,9 +1065,6 @@ function postgre_menu(){
         sleep 0.3
         postgre_menu
         ;;
-
-    
-    
     esac
 }
 function fpt_server_menu(){
@@ -1086,39 +1141,6 @@ function database_menu(){
             ;;
     esac
 }
-function web_server_menu(){
-    echo -e "${NL}${BLUE} ########################"
-    echo -e " ##   ${NC}${BOLD}SERVIDORES WEB${NC}${BLUE}   ##"
-    echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Apache       ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - NginX        ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
-
-    echo -e " ########################${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
-    read -r server_option
-
-    case $server_option in
-        1)
-            sleep 0.3
-            apache_menu
-            ;;
-        2)
-            sleep 0.3
-           echo "nginx_menu"
-            ;;
-        0)
-            sleep 0.3
-            return
-            ;;
-        *)
-            sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-            sleep 0.3
-            web_server_menu
-            ;;
-    esac
-}
 function docker_menu(){
     echo -e "${NL}${BLUE} ########################"
     echo -e " ##       ${NC}${BOLD}DOCKER${NC}${BLUE}       ##"
@@ -1171,7 +1193,7 @@ function main_menu(){
                 ;;
             2)  sleep 0.3
                 clear
-                web_server_menu
+                web_menu
                 ;;
             3)  sleep 0.3
                 clear
