@@ -363,7 +363,6 @@ EOF
         return 1
     fi
 }
-
 function restore_backup_mariadb() {
     local container_name
     local backup_file_path
@@ -717,6 +716,56 @@ function backup_mysql() {
     main_menu
 }
 # --->>> // MYSQL <<<---
+
+# --->>> APACHE2 <<<---
+function create_apache(){
+    local container_name
+    local suggested_port
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Apache2${NC}${BLUE} :::...${NC}"
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+        if check_container_name "$container_name"; then
+            break
+        fi
+    done
+   if ! suggested_port=$(check_and_suggest_port 80 8080 8099); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão ocupadas. Não é possível criar o container."
+        return 1
+    fi
+    mkdir -p configs
+
+        cat > configs/Dockerfile-apache <<EOF
+        FROM httpd:latest
+        EXPOSE $suggested_port
+EOF
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    docker build -t apache-image -f configs/Dockerfile-apache .
+
+    if [ $? -ne 0 ]; then 
+     echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    docker run -d --name $container_name -p $suggested_port:80 apache-image
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Servidor: ${BOLD}Apache${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        slee 0.3
+        main_menu
+    else
+       echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+       return 1
+    fi
+
+}
+
+# --->>> // APACHE2 <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
@@ -805,6 +854,46 @@ function docker_uninstall(){
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
+function apache_menu(){
+    echo -e "${NL}${BLUE} ########################"
+    echo -e " ##            ${NC}${BOLD}APACHE2${NC}${BLUE}      ##"
+    echo -e " ##....................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo          ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Hospedar um site estático        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Proxy reverso para APIs          ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                           ${BLUE}##"
+
+    echo -e " ########################${NC}"
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    read -r apache_option
+    case $apache_option in
+    1)
+        sleep 0.3
+        create_apache
+        ;;
+    2)
+        sleep 0.3
+        echo "Hospedar site estático"
+        ;;
+    3)
+        sleep 0.3
+        echo "Proxy reverso"
+        ;;
+    0)
+        sleep 0.3
+        clear
+        web_server_menu
+        ;;
+    *)
+    sleep 0.3
+    echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+    sleep 0.3
+    apache_menu
+    ;;  
+    
+    esac
+
+}
 function mariadb_menu(){
     echo -e "${NL}${BLUE} ################################################"
     echo -e " ##                   ${NC}${BOLD}MARIADB${NC}${BLUE}                  ##"
@@ -1012,7 +1101,7 @@ function web_server_menu(){
     case $server_option in
         1)
             sleep 0.3
-            echo "apache_menu"
+            apache_menu
             ;;
         2)
             sleep 0.3
