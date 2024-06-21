@@ -1,7 +1,0 @@
-FROM postgres:latest
-
-# Definir a senha do usuário postgres
-ENV POSTGRES_PASSWORD=calangos
-
-# Expor a porta padrão do PostgreSQL
-EXPOSE 5432
