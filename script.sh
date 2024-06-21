@@ -844,7 +844,7 @@ function create_vsftpd_container(){
     while true; do
         echo -ne "${NL}${BLUE} ...::: ${NC}${BOLD} Criando container vsftpd para SFTP${NC} ${BLUE}:::... ${NC}"
 
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -e " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -872,18 +872,52 @@ function create_vsftpd_container(){
 
     mkdir -p configs
 
+    cat <<EOF > configs/vsftpd.conf
+# vsftpd.conf
+
+# Configuração básica do vsftpd
+listen=YES
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+local_umask=022
+dirmessage_enable=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+xferlog_std_format=YES
+ftpd_banner=Bem-vindo ao servidor FTP
+chroot_local_user=YES
+
+# Configuração adicional para melhorar a segurança
+allow_writeable_chroot=YES
+ssl_enable=NO
+EOF
     cat > configs/Dockerfile-vsftpd <<EOF
-FROM fauria/vsftpd
+FROM alpine:latest
 
-RUN useradd -m $sftp_user && echo "$sftp_user:$sftp_password" | chpasswd
-RUN mkdir -p /home/$sftp_user/ftp/upload && chown nobody:ftp /home/$sftp_user/ftp && chown $sftp_user:ftp /home/$sftp_user/ftp/upload
-RUN echo "local_enable=YES" >> /etc/vsftpd/vsftpd.conf
-RUN echo "write_enable=YES" >> /etc/vsftpd/vsftpd.conf
-RUN echo "chroot_local_user=YES" >> /etc/vsftpd/vsftpd.conf
-RUN echo "allow_writeable_chroot=YES" >> /etc/vsftpd/vsftpd.conf
+# Manter informações sobre quem está mantendo esta imagem
+LABEL maintainer="seu-email@dominio.com"
 
-EXPOSE 20 21 $suggested_port
-CMD ["/usr/sbin/vsftpd", "/etc/vsftpd/vsftpd.conf"]
+# Instalar pacotes necessários
+RUN apk update && apk add --no-cache \\
+    vsftpd \\
+    openssh \\
+    bash
+
+# Configurar o SSH
+RUN mkdir /var/run/sshd \\
+    && echo 'root:password' | chpasswd \\
+    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+# Configurar o vsftpd
+COPY vsftpd.conf /etc/vsftpd/vsftpd.conf
+RUN echo "vsftpd" | tee -a /etc/ftpusers
+
+# Expor as portas necessárias
+EXPOSE 20 21 22
+
+# Comando para iniciar o vsftpd e sshd
+CMD /usr/sbin/sshd && /usr/sbin/vsftpd /etc/vsftpd/vsftpd.conf
 EOF
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Constuindo imagem Docker${NC} ${BLUE}:::...${NC}"
