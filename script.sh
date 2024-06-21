@@ -1145,13 +1145,12 @@ function postgre_menu(){
         ;;
     esac
 }
-function fpt_server_menu(){
+function sfpt_menu(){
     echo -e "${NL}${BLUE} ########################"
     echo -e " ##   ${NC}${BOLD}SERVIDORES FTP${NC}${BLUE}   ##"
     echo -e " ##....................##"
     echo -e " ##${NC} [${INPUT}1${NC}] - ProFTPD      ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - vsftpd       ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - FileZilla    ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
     echo -e " ########################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
@@ -1164,21 +1163,18 @@ function fpt_server_menu(){
             ;;
         2)
             sleep 0.3
-            echo "vsftpd_menu"
+            create_vsftpd_container
             ;;
-        3)
-            sleep 0.3
-            echo "filezilla_menu"
-            ;;
+       
         0)
             sleep 0.3
-            return
+            main_menu
             ;;
         *)
             sleep 0.3
             echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
             sleep 0.3
-            ftp_server_menu
+            sftp_menu
             ;;
     esac
 }
@@ -1275,7 +1271,7 @@ function main_menu(){
                 ;;
             3)  sleep 0.3
                 clear
-                fpt_server_menu
+                sfpt_menu
                 ;;
             4)  slee 0.3
                 clear
