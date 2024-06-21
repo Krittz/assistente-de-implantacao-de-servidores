@@ -115,11 +115,7 @@ function create_postgresql_container() {
 
     cat > configs/Dockerfile-postgresql <<EOF
 FROM postgres:latest
-
-# Definir a senha do usuário postgres
 ENV POSTGRES_PASSWORD=$db_password
-
-# Expor a porta padrão do PostgreSQL
 EXPOSE $suggested_port
 EOF
 
@@ -790,7 +786,6 @@ function reverse_proxy_nginx(){
 
     cat > configs/nginx.conf <<EOF
 events {}
-
 http {
     server {
         listen 80;
@@ -834,17 +829,17 @@ EOF
 }
 # --->>> //NGINX <<<---
 
-# --->>> VSFTPD <<<---
 # --->>> SFTP <<<---
+# --->>> VSFTPD <<<---
 function create_vsftpd_container() {
     local container_name
     local sftp_user
     local sftp_password
 
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
+        echo -ne "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
         
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -e " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -874,7 +869,6 @@ function create_vsftpd_container() {
 
     cat > configs/Dockerfile-sftp <<EOF
 FROM ubuntu:latest
-
 RUN apt-get update && apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
 RUN echo 'root:screencast' | chpasswd
@@ -911,10 +905,105 @@ EOF
         return 1
     fi
 }
-# --->>> //SFTP <<<---
-
 # --->>> //VSFTPD <<<---
+# --->>> ProFTPD <<<---
+#!/bin/bash
 
+function create_proftpd_container() {
+    local container_name
+    local sftp_user
+    local sftp_password
+
+    while true; do
+        echo -e "\nCriando ProFTPD com SFTP"
+        echo -ne "Informe o nome do novo container: "
+        read container_name
+
+        if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}\$"; then
+            echo "O nome do container '${container_name}' já está em uso. Por favor, escolha outro nome."
+        else
+            break
+        fi
+    done
+
+    echo -ne "Informe o nome do usuário SFTP: "
+    read sftp_user
+
+    echo -ne "Informe a senha do usuário SFTP: "
+    read -s sftp_password
+    echo
+
+    if [ -z "$sftp_user" ] || [ -z "$sftp_password" ]; then
+        echo "Usuário e senha não podem ser vazios!"
+        return 1
+    fi
+
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 2222 2229); then
+        echo "Todas as portas entre 2222 e 2229 estão ocupadas. Não é possível criar o container."
+        return 1
+    fi
+
+    # Criar o Dockerfile
+    mkdir -p configs
+    cat > configs/Dockerfile-proftpd-sftp <<EOF
+    FROM debian:latest
+
+    RUN apt-get update && apt-get install -y proftpd-basic openssh-client
+
+    RUN echo "LoadModule mod_sftp.c" >> /etc/proftpd/modules.conf
+
+    RUN echo "\
+    <IfModule mod_sftp.c>\n\
+        SFTPEngine on\n\
+        Port 2222\n\
+        SFTPLog /var/log/proftpd/sftp.log\n\
+        SFTPHostKey /etc/ssh/ssh_host_rsa_key\n\
+        SFTPHostKey /etc/ssh/ssh_host_dsa_key\n\
+        SFTPHostKey /etc/ssh/ssh_host_ecdsa_key\n\
+        SFTPHostKey /etc/ssh/ssh_host_ed25519_key\n\
+        SFTPAuthMethods password\n\
+    </IfModule>" >> /etc/proftpd/proftpd.conf
+
+    RUN mkdir -p /etc/ssh && \
+        ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N '' && \
+        ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N '' && \
+        ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N '' && \
+        ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ''
+
+    RUN useradd -m $sftp_user && echo "$sftp_user:$sftp_password" | chpasswd
+
+    EXPOSE 2222
+
+    CMD ["/usr/sbin/proftpd", "-n"]
+EOF
+
+    echo -e "\nConstruindo imagem Docker..."
+    docker build -t proftpd-sftp-image -f configs/Dockerfile-proftpd-sftp .
+
+    if [ $? -ne 0 ]; then
+        echo "Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    docker run -d --name $container_name -p $suggested_port:2222 proftpd-sftp-image
+
+    if [ $? -eq 0 ]; then
+        echo "Container '$container_name' criado e executando na porta $suggested_port."
+        echo "   Container: $container_name"
+        echo "   ProFTPD: com SFTP"
+        echo "   Porta: $suggested_port"
+        echo "   Usuário: $sftp_user"
+    else
+        echo "Falha ao criar o container '$container_name'."
+        return 1
+    fi
+}
+
+
+
+# --->>> //ProFTPD <<<---
+# --->>> //SFTP <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
@@ -1163,7 +1252,7 @@ function sfpt_menu(){
     case $server_option in
         1)
             sleep 0.3
-            echo "proftpd_menu"
+            create_proftpd_container
             ;;
         2)
             sleep 0.3
