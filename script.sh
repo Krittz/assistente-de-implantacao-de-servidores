@@ -833,6 +833,84 @@ EOF
     fi
 }
 # --->>> //NGINX <<<---
+
+# --->>> VSFTPD <<<---
+function create_vsftpd_container(){
+    local container_name
+    local sftp_user
+    local sftp_password
+    local ssh_port
+
+    while true; do
+        echo -ne "${NL}${BLUE} ...::: ${NC}${BOLD} Criando container vsftpd para SFTP${NC} ${BLUE}:::... ${NC}"
+
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+
+        if check_container_name "$container_name"; then
+            break
+        fi
+    done
+
+    echo -ne " ${INPUT}↳${NC} Informe o nome do usuário SFTP: "
+    read sftp_user
+
+    echo -ne " ${INPUT}↳${NC} Informe a senha do usuário SFTP: "
+    read -s sftp_password
+    echo
+
+    if [ -z "$sftp_user" ] || [ -z "$sftp_password" ]; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+        return 1
+    fi
+
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 22 2222 2299); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 2222 2299 estão ocupadas. Não é possível criar o container."
+        return 1
+    fi
+
+    mkdir -p configs
+
+    cat > configs/Dockerfile-vsftpd <<EOF
+FROM fauria/vsftpd
+
+RUN useradd -m $sftp_user && echo "$sftp_user:$sftp_password" | chpasswd
+RUN mkdir -p /home/$sftp_user/ftp/upload && chown nobody:ftp /home/$sftp_user/ftp && chown $sftp_user:ftp /home/$sftp_user/ftp/upload
+RUN echo "local_enable=YES" >> /etc/vsftpd/vsftpd.conf
+RUN echo "write_enable=YES" >> /etc/vsftpd/vsftpd.conf
+RUN echo "chroot_local_user=YES" >> /etc/vsftpd/vsftpd.conf
+RUN echo "allow_writeable_chroot=YES" >> /etc/vsftpd/vsftpd.conf
+
+EXPOSE 20 21 $suggested_port
+CMD ["/usr/sbin/vsftpd", "/etc/vsftpd/vsftpd.conf"]
+EOF
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Constuindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    docker build -t vsftpd-image -f configs/Dockerfile-vsftpd .
+
+     if [ $? -ne 0 ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    docker run -d --name $container_name -p $suggested_port:22 vsftpd-image
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Serviço: ${BOLD}vsftpd para SFTP${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$sftp_user${NC}"
+        sleep 0.3
+        main_menu
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
+}
+# --->>> //VSFTPD <<<---
+
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
