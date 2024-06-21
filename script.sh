@@ -835,20 +835,20 @@ EOF
 # --->>> //NGINX <<<---
 
 # --->>> VSFTPD <<<---
-function create_vsftpd_container(){
+# --->>> SFTP <<<---
+function create_vsftpd_container() {
     local container_name
     local sftp_user
     local sftp_password
-    local ssh_port
 
     while true; do
-        echo -ne "${NL}${BLUE} ...::: ${NC}${BOLD} Criando container vsftpd para SFTP${NC} ${BLUE}:::... ${NC}"
-
-        echo -e " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
+        
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
-            break
+            break  
         fi
     done
 
@@ -865,75 +865,43 @@ function create_vsftpd_container(){
     fi
 
     local suggested_port
-    if ! suggested_port=$(check_and_suggest_port 22 2222 2299); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 2222 2299 estão ocupadas. Não é possível criar o container."
+    if ! suggested_port=$(check_and_suggest_port 22 22 29); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 22 e 29 estão ocupadas. Não é possível criar o container."
         return 1
     fi
 
     mkdir -p configs
 
-    cat <<EOF > configs/vsftpd.conf
-# vsftpd.conf
+    cat > configs/Dockerfile-sftp <<EOF
+FROM ubuntu:latest
 
-# Configuração básica do vsftpd
-listen=YES
-anonymous_enable=NO
-local_enable=YES
-write_enable=YES
-local_umask=022
-dirmessage_enable=YES
-xferlog_enable=YES
-connect_from_port_20=YES
-xferlog_std_format=YES
-ftpd_banner=Bem-vindo ao servidor FTP
-chroot_local_user=YES
-
-# Configuração adicional para melhorar a segurança
-allow_writeable_chroot=YES
-ssl_enable=NO
-EOF
-    cat > configs/Dockerfile-vsftpd <<EOF
-FROM alpine:latest
-
-# Manter informações sobre quem está mantendo esta imagem
-LABEL maintainer="seu-email@dominio.com"
-
-# Instalar pacotes necessários
-RUN apk update && apk add --no-cache \\
-    vsftpd \\
-    openssh \\
-    bash
-
-# Configurar o SSH
-RUN mkdir /var/run/sshd \\
-    && echo 'root:password' | chpasswd \\
-    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-
-# Configurar o vsftpd
-COPY vsftpd.conf /etc/vsftpd/vsftpd.conf
-RUN echo "vsftpd" | tee -a /etc/ftpusers
-
-# Expor as portas necessárias
-EXPOSE 20 21 22
-
-# Comando para iniciar o vsftpd e sshd
-CMD /usr/sbin/sshd && /usr/sbin/vsftpd /etc/vsftpd/vsftpd.conf
+RUN apt-get update && apt-get install -y openssh-server
+RUN mkdir /var/run/sshd
+RUN echo 'root:screencast' | chpasswd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+RUN mkdir /home/$sftp_user
+RUN useradd -d /home/$sftp_user -s /bin/bash $sftp_user
+RUN echo '$sftp_user:$sftp_password' | chpasswd
+RUN chown -R $sftp_user:$sftp_user /home/$sftp_user
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Constuindo imagem Docker${NC} ${BLUE}:::...${NC}"
-    docker build -t vsftpd-image -f configs/Dockerfile-vsftpd .
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    docker build -t sftp-image -f configs/Dockerfile-sftp .
 
-     if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
         return 1
     fi
 
-    docker run -d --name $container_name -p $suggested_port:22 vsftpd-image
+    docker run -d --name $container_name -p $suggested_port:22 sftp-image
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
         echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Serviço: ${BOLD}vsftpd para SFTP${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}SFTP: ${BOLD}OpenSSH${NC}"
         echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
         echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$sftp_user${NC}"
         sleep 0.3
@@ -943,6 +911,8 @@ EOF
         return 1
     fi
 }
+# --->>> //SFTP <<<---
+
 # --->>> //VSFTPD <<<---
 
 # --->>> DOCKER <<<---
