@@ -948,7 +948,7 @@ function create_proftpd_container() {
     cat > configs/Dockerfile-proftpd-sftp <<EOF
 FROM debian:latest
 
-RUN apt-get update && apt-get install -y proftpd-basic proftpd-mod-sftp openssh-client
+RUN apt-get update && apt-get install -y proftpd-basic proftpd-mod-vroot openssh-client
 
 RUN echo "LoadModule mod_sftp.c" >> /etc/proftpd/modules.conf
 
@@ -997,8 +997,6 @@ EOF
         return 1
     fi
 }
-
-
 # --->>> //ProFTPD <<<---
 # --->>> //SFTP <<<---
 # --->>> DOCKER <<<---
