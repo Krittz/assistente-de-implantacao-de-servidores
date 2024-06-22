@@ -1004,7 +1004,6 @@ function create_ssh_sftp_container() {
         fi
     done
 
-    # Verificar se há portas disponíveis para sugerir
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 2222 2299); then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 2222 e 2299 estão ocupadas. Não é possível criar o container."
