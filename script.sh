@@ -760,6 +760,70 @@ function apache_static_site(){
 }
 # --->>> // APACHE2 <<<---
 # --->>> NGINX <<<---
+function create_nginx_frontend_container() {
+    local container_name
+    local frontend_dir
+
+    while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Nginx para Frontend${NC} ${BLUE}:::...${NC}"
+        
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+
+        if check_container_name "$container_name"; then
+            break  
+        fi
+    done
+
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do diretório do frontend: "
+        read frontend_dir
+
+        if check_directory_exists "$frontend_dir"; then
+            break
+        else
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Diretório '${frontend_dir}' não existe. Tente novamente."
+        fi
+    done
+
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 8080 8080 8099); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão ocupadas. Não é possível criar o container."
+        return 1
+    fi
+
+    mkdir -p configs
+    cp -r "$frontend_dir" configs/frontend
+
+    cat > configs/Dockerfile-frontend <<EOF
+FROM nginx:latest
+COPY frontend /usr/share/nginx/html
+EXPOSE 80
+EOF
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    docker build -t frontend-image -f configs/Dockerfile-frontend configs
+
+    if [ $? -ne 0 ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    docker run -d --name $container_name -p $suggested_port:80 frontend-image
+
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Diretório Frontend: ${BOLD}$frontend_dir${NC}"
+        sleep 0.3
+        main_menu
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
+}
+
 function reverse_proxy_nginx(){
     local container_name
     local upstream_url
@@ -829,7 +893,6 @@ EOF
 }
 # --->>> //NGINX <<<---
 
-# --->>> SFTP <<<---
 # --->>> VSFTPD <<<---
 function create_vsftpd_container() {
     local container_name
@@ -909,6 +972,7 @@ EOF
     fi
 }
 # --->>> //VSFTPD <<<---
+# --->>> OpenSSH <<<---
 function create_ssh_sftp_container() {
     local container_name
     local sftp_user
@@ -947,13 +1011,10 @@ function create_ssh_sftp_container() {
         return 1
     fi
 
-    # Criar diretório para as configurações
     mkdir -p configs
 
-    # Criar arquivo users.conf com usuário e senha
     echo "$sftp_user:$sftp_password:1001" > configs/users.conf
 
-    # Criar arquivo sshd_config com configurações do OpenSSH
     cat > configs/sshd_config <<EOF
 # Exemplo de configuração do sshd_config
 Subsystem sftp internal-sftp
@@ -964,7 +1025,6 @@ Match User $sftp_user
     AllowTcpForwarding no
 EOF
 
-    # Criar o Dockerfile para a imagem Docker
     cat > Dockerfile <<EOF
 # Usar a imagem Debian como base
 FROM debian:latest
@@ -994,7 +1054,6 @@ EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
-    # Construir a imagem Docker
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
     docker build -t sftp-image .
 
@@ -1003,7 +1062,6 @@ EOF
         return 1
     fi
 
-    # Executar o container com SSH/SFTP
     docker run -d --name $container_name -p $suggested_port:22 \
       -v $(pwd)/configs/users.conf:/etc/sftp-users.conf \
       sftp-image
@@ -1021,7 +1079,7 @@ EOF
         return 1
     fi
 }
-# --->>> //SFTP <<<---
+# --->>> //OpenSSH <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
@@ -1111,13 +1169,14 @@ function docker_uninstall(){
 
 # --->>> MENUS <<<---
 function web_menu(){
-    echo -e "${NL}${BLUE} ######################################"
-    echo -e " ##            ${NC}${BOLD}WEB SERVERS${NC}${BLUE}           ##"
-    echo -e " ##..................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Hospedar um site estático  ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Proxy reverso para APIs    ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                     ${BLUE}##"
-    echo -e " ######################################${NC}"
+    echo -e "${NL}${BLUE} #######################################"
+    echo -e " ##            ${NC}${BOLD}WEB SERVERS${NC}${BLUE}            ##"
+    echo -e " ##...................................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Hospedar um site estático   ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}3${NC}] - Hospedar um fron-end (NginX)${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}##"
+    echo -e " #######################################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r web_option
     case $web_option in
@@ -1129,7 +1188,10 @@ function web_menu(){
         sleep 0.3
         reverse_proxy_nginx
         ;;
-    
+    3)
+        sleep 0.3
+        create_nginx_frontend_container
+        ;;
     0)
         sleep 0.3
         clear
@@ -1384,10 +1446,15 @@ function main_menu(){
                 clear
                 sfpt_menu
                 ;;
-            4)  slee 0.3
+            4)  sleep 0.3
                 clear
                 database_menu
                 ;;
+            5) sleep 0.3
+                clear
+                create_samba_container
+                ;;
+
             0)  echo -ne "${BLUE}Encerrando ...${NL}"
                 sleep 0.3
                 exit 0
