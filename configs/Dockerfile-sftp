@@ -1,0 +1,4 @@
+FROM atmoz/sftp
+
+COPY users.conf /etc/sftp-users.conf
+RUN echo "cristian:$1$.SMfdfam$dBuZfHX.BdlNl2H78D9Dm1:1001" >> /etc/sftp-users.conf

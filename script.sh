@@ -909,15 +909,17 @@ EOF
     fi
 }
 # --->>> //VSFTPD <<<---
-# --->>> ProFTPD <<<---
-function create_proftpd_container() {
+function create_ssh_sftp_container() {
     local container_name
     local sftp_user
     local sftp_password
+
     while true; do
-        echo -e "${NL}${BLUE}...::: ${NC}${BOLD}Criando ProFTPD com SFTP${NC}${BLUE} :::...${NC}"
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
+        
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
+
         if check_container_name "$container_name"; then
             break  
         fi
@@ -938,56 +940,78 @@ function create_proftpd_container() {
         fi
     done
 
+    # Verificar se há portas disponíveis para sugerir
     local suggested_port
-    if ! suggested_port=$(check_and_suggest_port 2222 2229); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 2222 e 2229 estão ocupadas. Não é possível criar o container."
+    if ! suggested_port=$(check_and_suggest_port 2222 2299); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 2222 e 2299 estão ocupadas. Não é possível criar o container."
         return 1
     fi
-    
+
+    # Criar diretório para as configurações
     mkdir -p configs
-    cat > configs/Dockerfile-proftpd-sftp <<EOF
+
+    # Criar arquivo users.conf com usuário e senha
+    echo "$sftp_user:$sftp_password:1001" > configs/users.conf
+
+    # Criar arquivo sshd_config com configurações do OpenSSH
+    cat > configs/sshd_config <<EOF
+# Exemplo de configuração do sshd_config
+Subsystem sftp internal-sftp
+Match User $sftp_user
+    PasswordAuthentication yes
+    ChrootDirectory /home/$sftp_user
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+EOF
+
+    # Criar o Dockerfile para a imagem Docker
+    cat > Dockerfile <<EOF
+# Usar a imagem Debian como base
 FROM debian:latest
 
-RUN apt-get update && apt-get install -y proftpd-basic proftpd-mod-vroot openssh-client
+# Instalar OpenSSH Server e outras dependências necessárias
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server \
+    && mkdir /var/run/sshd \
+    && useradd -m cristian \
+    && echo "cristian:calangos" | chpasswd \
+    && chown root:root /home/cristian \
+    && chmod 755 /home/cristian \
+    && mkdir /home/cristian/upload \
+    && chown cristian:cristian /home/cristian/upload \
+    && echo "Subsystem sftp internal-sftp" >> /etc/ssh/sshd_config
 
-RUN echo "LoadModule mod_sftp.c" >> /etc/proftpd/modules.conf
+# Copiar o arquivo de configuração sshd_config para o container
+COPY configs/sshd_config /etc/ssh/sshd_config
 
-RUN echo "\
-<IfModule mod_sftp.c>\n\
-    SFTPEngine on\n\
-    Port 2222\n\
-    SFTPLog /var/log/proftpd/sftp.log\n\
-    SFTPHostKey /etc/ssh/ssh_host_rsa_key\n\
-    SFTPHostKey /etc/ssh/ssh_host_dsa_key\n\
-    SFTPHostKey /etc/ssh/ssh_host_ecdsa_key\n\
-    SFTPHostKey /etc/ssh/ssh_host_ed25519_key\n\
-    SFTPAuthMethods password\n\
-</IfModule>" >> /etc/proftpd/proftpd.conf
+# Criar um volume para o diretório de usuários SFTP
+VOLUME /home/cristian
 
-RUN mkdir -p /etc/ssh && \
-    ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N '' && \
-    ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N '' && \
-    ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N '' && \
-    ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ''
+# Expor a porta 22 para conexões SSH/SFTP
+EXPOSE 22
 
-RUN useradd -m $sftp_user && echo "$sftp_user:$sftp_password" | chpasswd
-
-EXPOSE 2222
-
-CMD ["/usr/sbin/proftpd", "-n"]
+# Comando para iniciar o OpenSSH Server
+CMD ["/usr/sbin/sshd", "-D"]
 EOF
+
+    # Construir a imagem Docker
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
-    docker build -t proftpd-sftp-image -f configs/Dockerfile-proftpd-sftp .
+    docker build -t sftp-image .
 
     if [ $? -ne 0 ]; then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
         return 1
     fi
-    docker run -d --name $container_name -p $suggested_port:2222 proftpd-sftp-image
+
+    # Executar o container com SSH/SFTP
+    docker run -d --name $container_name -p $suggested_port:22 \
+      -v $(pwd)/configs/users.conf:/etc/sftp-users.conf \
+      sftp-image
+
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
         echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}ProFTPD: ${BOLD}com SFTP${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}SFTP via SSH: ${BOLD}OpenSSH${NC}"
         echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
         echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$sftp_user${NC}"
         sleep 0.3
@@ -997,7 +1021,6 @@ EOF
         return 1
     fi
 }
-# --->>> //ProFTPD <<<---
 # --->>> //SFTP <<<---
 # --->>> DOCKER <<<---
 function docker_install(){
@@ -1235,9 +1258,9 @@ function postgre_menu(){
 }
 function sfpt_menu(){
     echo -e "${NL}${BLUE} ########################"
-    echo -e " ##   ${NC}${BOLD}SERVIDORES FTP${NC}${BLUE}   ##"
+    echo -e " ##   ${NC}${BOLD}SERVIDORES SFTP${NC}${BLUE}  ##"
     echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - ProFTPD      ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - OpenSSH      ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - vsftpd       ${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
     echo -e " ########################${NC}"
@@ -1247,7 +1270,7 @@ function sfpt_menu(){
     case $server_option in
         1)
             sleep 0.3
-            create_proftpd_container
+            create_ssh_sftp_container
             ;;
         2)
             sleep 0.3

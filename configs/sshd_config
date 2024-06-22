@@ -1,0 +1,7 @@
+# Exemplo de configuração do sshd_config
+Subsystem sftp internal-sftp
+Match User cristian
+    PasswordAuthentication yes
+    ChrootDirectory /home/cristian
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
