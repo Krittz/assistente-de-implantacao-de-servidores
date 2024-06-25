@@ -757,7 +757,83 @@ function apache_static_site(){
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
         return 1
     fi
+} 
+function reverse_proxy_apache() {
+    local container_name
+    local upstream_url
+
+    while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Apache (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+
+        if check_container_name "$container_name"; then
+            break
+        fi
+    done
+
+    echo -ne " ${INPUT}↳${NC} Informe a URL do upstream da API (ex: http://endereco-da-api:porta): "
+    read upstream_url
+
+    local suggested_port
+    if ! suggested_port=$(check_and_suggest_port 8080 8099); then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão indisponíveis. Não é possível criar o container."
+        return 1
+    fi
+
+    mkdir -p configs
+
+    cat > configs/httpd.conf <<EOF
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule log_config_module modules/mod_log_config.so
+LoadModule mpm_event_module modules/mod_mpm_event.so
+LoadModule authz_core_module modules/mod_authz_core.so
+
+<VirtualHost *:80>
+    ServerName localhost
+    ProxyPreserveHost On
+    ProxyPass / $upstream_url
+    ProxyPassReverse / $upstream_url
+    <Proxy *>
+        Require all granted
+    </Proxy>
+    ErrorLog /usr/local/apache2/logs/error.log
+    CustomLog /usr/local/apache2/logs/access.log combined
+</VirtualHost>
+EOF
+
+    cat > configs/Dockerfile-apache <<EOF
+FROM httpd:latest
+COPY configs/httpd.conf /usr/local/apache2/conf/httpd.conf
+RUN mkdir -p /usr/local/apache2/logs && chmod -R 777 /usr/local/apache2/logs
+EOF
+
+    echo -e "${NL}${BLUE} ...:::${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} :::...${NC}"
+    docker build -t apache-image -f configs/Dockerfile-apache .
+
+    if [ $? -ne 0 ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    fi
+
+    docker run -d --name $container_name -p $suggested_port:80 apache-image
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Proxy reverso para: ${BOLD}$upstream_url${NC}"
+        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        sleep 0.3
+        main_menu
+    else
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    fi
 }
+
+
+
 # --->>> // APACHE2 <<<---
 # --->>> NGINX <<<---
 function create_nginx_frontend_container() {
@@ -863,7 +939,6 @@ http {
     }
 }
 EOF
-
     cat > configs/Dockerfile-nginx << EOF
 FROM nginx:latest
 COPY configs/nginx.conf /etc/nginx/nginx.conf
@@ -1015,7 +1090,6 @@ function create_ssh_sftp_container() {
     echo "$sftp_user:$sftp_password:1001" > configs/users.conf
 
     cat > configs/sshd_config <<EOF
-# Exemplo de configuração do sshd_config
 Subsystem sftp internal-sftp
 Match User $sftp_user
     PasswordAuthentication yes
@@ -1027,8 +1101,6 @@ EOF
     cat > Dockerfile <<EOF
 # Usar a imagem Debian como base
 FROM debian:latest
-
-# Instalar OpenSSH Server e outras dependências necessárias
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server \
     && mkdir /var/run/sshd \
@@ -1040,16 +1112,9 @@ RUN apt-get update \
     && chown cristian:cristian /home/cristian/upload \
     && echo "Subsystem sftp internal-sftp" >> /etc/ssh/sshd_config
 
-# Copiar o arquivo de configuração sshd_config para o container
 COPY configs/sshd_config /etc/ssh/sshd_config
-
-# Criar um volume para o diretório de usuários SFTP
 VOLUME /home/cristian
-
-# Expor a porta 22 para conexões SSH/SFTP
 EXPOSE 22
-
-# Comando para iniciar o OpenSSH Server
 CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
@@ -1167,44 +1232,105 @@ function docker_uninstall(){
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
-function web_menu(){
+function apache_menu(){
     echo -e "${NL}${BLUE} #######################################"
-    echo -e " ##            ${NC}${BOLD}WEB SERVERS${NC}${BLUE}            ##"
+    echo -e " ##              ${NC}${BOLD}APACHE   ${NC}${BLUE}            ##"
     echo -e " ##...................................##"
     echo -e " ##${NC} [${INPUT}1${NC}] - Hospedar um site estático   ${BLUE}##"
     echo -e " ##${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Hospedar um fron-end (NginX)${BLUE}##"
     echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}##"
     echo -e " #######################################${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r web_option
     case $web_option in
-    1)
-        sleep 0.3
-        apache_static_site
-        ;;
-    2)
-        sleep 0.3
-        reverse_proxy_nginx
-        ;;
-    3)
-        sleep 0.3
-        create_nginx_frontend_container
-        ;;
-    0)
-        sleep 0.3
-        clear
-        main_menu
-        ;;
-    *)
-    sleep 0.3
-    echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-    sleep 0.3
-    web_menu
-    ;;     
+        1)
+            sleep 0.3
+            apache_static_site
+            ;;
+        2)
+            sleep 0.3
+            reverse_proxy_apache
+            ;;   
+        0)
+            sleep 0.3
+            clear
+            main_menu
+            ;;
+        *)
+            sleep 0.3
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+            sleep 0.3
+            apache_menu
+            ;;     
     esac
 
 }
+function nginx_menu(){
+    echo -e "${NL}${BLUE} #######################################"
+    echo -e " ##               ${NC}${BOLD}NGINX  ${NC}${BLUE}             ##"
+    echo -e " ##...................................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Hospedar um site estático   ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}##"
+    echo -e " #######################################${NC}"
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    read -r web_option
+    case $web_option in
+        1)
+            sleep 0.3
+            create_nginx_frontend_container
+            ;;
+        2)
+            sleep 0.3
+            reverse_proxy_nginx
+            ;;   
+        0)
+            sleep 0.3
+            clear
+            main_menu
+            ;;
+        *)
+            sleep 0.3
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+            sleep 0.3
+            nginx_menu
+            ;;     
+    esac
+
+}
+function web_server_menu(){
+    echo -e "${NL}${BLUE} ########################"
+    echo -e " ##     ${NC}${BOLD}WEB SERVERS${NC}${BLUE}    ##"
+    echo -e " ##....................##"
+    echo -e " ##${NC} [${INPUT}1${NC}] - Apache       ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}2${NC}] - Nginx        ${BLUE}##"
+    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
+    echo -e " ########################${NC}"
+    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    read -r server_option
+    case $server_option in 
+        1) 
+            sleep 0.3
+            apache_menu
+            ;;
+        2) 
+            sleep 0.3
+            nginx_menu
+            ;;
+        0) 
+            sleep 0.3
+            clear
+            main_menu
+            ;;
+        *)
+            sleep 0.3
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+            sleep 0.3
+            web_server_menu
+            ;;     
+    esac
+}
+
 function mariadb_menu(){
     echo -e "${NL}${BLUE} ################################################"
     echo -e " ##                   ${NC}${BOLD}MARIADB${NC}${BLUE}                  ##"
@@ -1439,7 +1565,7 @@ function main_menu(){
                 ;;
             2)  sleep 0.3
                 clear
-                web_menu
+                web_server_menu
                 ;;
             3)  sleep 0.3
                 clear
