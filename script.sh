@@ -783,42 +783,56 @@ function reverse_proxy_apache() {
 
     mkdir -p configs
 
+    # Criar o arquivo de configuração do Apache
     cat > configs/httpd.conf <<EOF
-LoadModule proxy_module modules/mod_proxy.so
-LoadModule proxy_http_module modules/mod_proxy_http.so
-LoadModule log_config_module modules/mod_log_config.so
-LoadModule mpm_event_module modules/mod_mpm_event.so
-LoadModule authz_core_module modules/mod_authz_core.so
-
 <VirtualHost *:80>
     ServerName localhost
     ProxyPreserveHost On
     ProxyPass / $upstream_url
     ProxyPassReverse / $upstream_url
-    <Proxy *>
-        Require all granted
-    </Proxy>
-    ErrorLog /usr/local/apache2/logs/error.log
-    CustomLog /usr/local/apache2/logs/access.log combined
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
 EOF
 
-    cat > configs/Dockerfile-apache <<EOF
-FROM httpd:latest
-COPY configs/httpd.conf /usr/local/apache2/conf/httpd.conf
-RUN mkdir -p /usr/local/apache2/logs && chmod -R 777 /usr/local/apache2/logs
+    # Dockerfile para construir a imagem
+    cat > configs/Dockerfile-apache << EOF
+FROM debian:latest
+
+MAINTAINER SeuNome "seuemail@example.com"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update \\
+    && apt-get -y install apache2 \\
+    && apt-get clean \\
+    && a2enmod proxy \\
+    && a2enmod proxy_http \\
+    && a2enmod ssl \\
+    && a2enmod rewrite \\
+    && service apache2 stop
+
+EXPOSE 80
+
+VOLUME /etc/apache2/sites-available
+
+COPY configs/httpd.conf /etc/apache2/sites-available/000-default.conf
+
+CMD ["apachectl", "-D", "FOREGROUND"]
 EOF
 
+    # Construir a imagem Docker
     echo -e "${NL}${BLUE} ...:::${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} :::...${NC}"
-    docker build -t apache-image -f configs/Dockerfile-apache .
+    docker build -t apache-reverse-proxy -f configs/Dockerfile-apache .
 
     if [ $? -ne 0 ]; then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
         return 1
     fi
 
-    docker run -d --name $container_name -p $suggested_port:80 apache-image
-    
+    # Executar o container Docker
+    docker run -d --name $container_name -p $suggested_port:80 apache-reverse-proxy
+
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
         echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
@@ -831,7 +845,92 @@ EOF
         return 1
     fi
 }
+function everse_proxy_apache() {
+    local container_name
+    local upstream_url
 
+    while true; do
+        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Apache (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
+        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        read container_name
+
+        if check_container_name "$container_name"; then
+            break
+        fi
+    done
+
+    echo -ne " ${INPUT}↳${NC} Informe a URL do upstream da API (ex: http://endereco-da-api:porta): "
+    read upstream_url
+
+    local suggested_port
+    suggested_port=$(check_and_suggest_port 8080 8099)
+    if [ -z "$suggested_port" ]; then
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão indisponíveis. Não é possível criar o container."
+        return 1
+    fi
+
+    mkdir -p configs
+
+    cat > configs/httpd.conf <<EOF
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule ssl_module modules/mod_ssl.so
+LoadModule rewrite_module modules/mod_rewrite.so
+
+<VirtualHost *:80>
+    ServerName localhost
+    ProxyPreserveHost On
+    ProxyPass / $upstream_url
+    ProxyPassReverse / $upstream_url
+    <Proxy *>
+        Require all granted
+    </Proxy>
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+EOF
+
+    cat > configs/Dockerfile-apache <<EOF
+FROM debian:latest
+
+MAINTAINER SeuNome <seuemail@example.com>
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update \\
+    && apt-get -y install apache2 \\
+                          nano \\
+                          && a2enmod proxy \\
+                          && a2enmod proxy_http \\
+                          && a2enmod ssl \\
+                          && a2enmod rewrite \\
+                          && service apache2 stop
+
+EXPOSE 80
+
+COPY configs/httpd.conf /etc/apache2/sites-available/000-default.conf
+
+CMD ["apachectl", "-D", "FOREGROUND"]
+EOF
+
+    echo -e "${NL}${BLUE} ...:::${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} :::...${NC}"
+    docker build -t apache-reverse-proxy -f configs/Dockerfile-apache . || {
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        return 1
+    }
+
+    docker run -d --name $container_name -p $suggested_port:80 apache-reverse-proxy || {
+        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        return 1
+    }
+
+    echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
+    echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+    echo -e " ${MAGENTA}🜙 ${NC}Proxy reverso para: ${BOLD}$upstream_url${NC}"
+    echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+    sleep 0.3
+    main_menu
+}
 
 
 # --->>> // APACHE2 <<<---
