@@ -783,7 +783,7 @@ function reverse_proxy_apache() {
 
     mkdir -p configs
 
-    # Criar o arquivo de configuração do Apache
+    
     cat > configs/httpd.conf <<EOF
 <VirtualHost *:80>
     ServerName localhost
@@ -794,15 +794,10 @@ function reverse_proxy_apache() {
     CustomLog \${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
 EOF
-
-    # Dockerfile para construir a imagem
     cat > configs/Dockerfile-apache << EOF
 FROM debian:latest
-
 MAINTAINER SeuNome "seuemail@example.com"
-
 ENV DEBIAN_FRONTEND noninteractive
-
 RUN apt-get update \\
     && apt-get -y install apache2 \\
     && apt-get clean \\
@@ -811,17 +806,12 @@ RUN apt-get update \\
     && a2enmod ssl \\
     && a2enmod rewrite \\
     && service apache2 stop
-
 EXPOSE 80
-
 VOLUME /etc/apache2/sites-available
-
 COPY configs/httpd.conf /etc/apache2/sites-available/000-default.conf
-
 CMD ["apachectl", "-D", "FOREGROUND"]
 EOF
 
-    # Construir a imagem Docker
     echo -e "${NL}${BLUE} ...:::${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} :::...${NC}"
     docker build -t apache-reverse-proxy -f configs/Dockerfile-apache .
 
@@ -830,7 +820,6 @@ EOF
         return 1
     fi
 
-    # Executar o container Docker
     docker run -d --name $container_name -p $suggested_port:80 apache-reverse-proxy
 
     if [ $? -eq 0 ]; then
@@ -845,94 +834,6 @@ EOF
         return 1
     fi
 }
-function everse_proxy_apache() {
-    local container_name
-    local upstream_url
-
-    while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Apache (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
-        read container_name
-
-        if check_container_name "$container_name"; then
-            break
-        fi
-    done
-
-    echo -ne " ${INPUT}↳${NC} Informe a URL do upstream da API (ex: http://endereco-da-api:porta): "
-    read upstream_url
-
-    local suggested_port
-    suggested_port=$(check_and_suggest_port 8080 8099)
-    if [ -z "$suggested_port" ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão indisponíveis. Não é possível criar o container."
-        return 1
-    fi
-
-    mkdir -p configs
-
-    cat > configs/httpd.conf <<EOF
-LoadModule proxy_module modules/mod_proxy.so
-LoadModule proxy_http_module modules/mod_proxy_http.so
-LoadModule ssl_module modules/mod_ssl.so
-LoadModule rewrite_module modules/mod_rewrite.so
-
-<VirtualHost *:80>
-    ServerName localhost
-    ProxyPreserveHost On
-    ProxyPass / $upstream_url
-    ProxyPassReverse / $upstream_url
-    <Proxy *>
-        Require all granted
-    </Proxy>
-    ErrorLog \${APACHE_LOG_DIR}/error.log
-    CustomLog \${APACHE_LOG_DIR}/access.log combined
-</VirtualHost>
-EOF
-
-    cat > configs/Dockerfile-apache <<EOF
-FROM debian:latest
-
-MAINTAINER SeuNome <seuemail@example.com>
-
-ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update \\
-    && apt-get -y install apache2 \\
-                          nano \\
-                          && a2enmod proxy \\
-                          && a2enmod proxy_http \\
-                          && a2enmod ssl \\
-                          && a2enmod rewrite \\
-                          && service apache2 stop
-
-EXPOSE 80
-
-COPY configs/httpd.conf /etc/apache2/sites-available/000-default.conf
-
-CMD ["apachectl", "-D", "FOREGROUND"]
-EOF
-
-    echo -e "${NL}${BLUE} ...:::${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} :::...${NC}"
-    docker build -t apache-reverse-proxy -f configs/Dockerfile-apache . || {
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
-        return 1
-    }
-
-    docker run -d --name $container_name -p $suggested_port:80 apache-reverse-proxy || {
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
-        return 1
-    }
-
-    echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-    echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-    echo -e " ${MAGENTA}🜙 ${NC}Proxy reverso para: ${BOLD}$upstream_url${NC}"
-    echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-    sleep 0.3
-    main_menu
-}
-
-
 # --->>> // APACHE2 <<<---
 # --->>> NGINX <<<---
 function create_nginx_frontend_container() {
@@ -1695,6 +1596,16 @@ if [ "$(id -u)" -ne 0 ]; then
     echo -e "${NL}${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Por favor execute esse script como root!${NL}"
     exit 1
 fi
-main_menu
+#main_menu
 
 
+
+echo -e " ______   ____    ______            "
+echo -e "/\__  _\ /\  _`\ /\__  _\/'\_/`\    "
+echo -e "\/_/\ \/ \ \ \L\_\/_/\ \/\      \   "
+echo -e "   \ \ \  \ \  _\/  \ \ \ \ \__\ \  "
+echo -e "    \_\ \__\ \ \/    \ \ \ \ \_/\ \ "
+echo -e "    /\_____\\ \_\     \ \_\ \_\\ \_\"
+echo -e "    \/_____/ \/_/      \/_/\/_/ \/_/"
+                                    
+                                    
