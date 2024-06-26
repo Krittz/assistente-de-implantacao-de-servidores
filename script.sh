@@ -12,12 +12,6 @@ BOLD='\033[1m'
 NL='\n'
 BLINK='\033[5m'
 
-#echo -e "${NL}${MAGENTA} ...::: ${NC}${BOLD}Instalação do Docker${NC} ${MAGENTA}:::...${NC}"
-#echo -e "${NL}${BLUE} >>>${NC}${BOLD} Atualizando Sistema ${NC}${BLUE}<<<${NC}"
-#echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker á está instalado!"
-#echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao atualizar sistema. Verifique sua conexão com a internet e tente novamente."
-#echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-
 # --->>> FUNÇÕES USUAIS <<<---
 function check_container_name(){
     local container_name=$1
@@ -82,28 +76,28 @@ function create_postgresql_container() {
     local db_user
     local db_password
 
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando PostgreSQL${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando PostgreSQL${NC} ${BLUE}:::...${NC}"
-        
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
-
         if check_container_name "$container_name"; then
             break  
         fi
     done
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+        read db_user
 
-    echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
-    read db_user
+        echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+        read -s db_password
+        echo
 
-    echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
-    read -s db_password
-    echo
-
-    if [ -z "$db_user" ] || [ -z "$db_password" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
-        return 1
-    fi
+        if [ -z "$db_user" ] || [ -z "$db_password" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+            continue
+        fi
+        break
+    done
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 5432 5432 5499); then
@@ -119,7 +113,7 @@ ENV POSTGRES_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
     docker build -t postgresql-image -f configs/Dockerfile-postgresql .
 
     if [ $? -ne 0 ]; then
@@ -288,35 +282,34 @@ function backup_postgresql(){
     main_menu
 }
 # --->>> //POSTGRESQL <<<---
-
 # --->>> MARIADB <<<----
 function create_mariadb_container() {
     local container_name
     local db_user
     local db_password
 
-    while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
-        
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
+    while true; do        
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
-
         if check_container_name "$container_name"; then
             break  
         fi
     done
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+        read db_user
 
-    echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
-    read db_user
+        echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+        read -s db_password
+        echo
 
-    echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
-    read -s db_password
-    echo
-
-    if [ -z "$db_user" ] || [ -z "$db_password" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
-        return 1
-    fi
+        if [ -z "$db_user" ] || [ -z "$db_password" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+            continue
+        fi
+        break
+    done
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
@@ -336,7 +329,7 @@ ENV MARIADB_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
     docker build -t mariadb-image -f configs/Dockerfile-mariadb .
 
     if [ $? -ne 0 ]; then
@@ -365,34 +358,41 @@ function restore_backup_mariadb() {
     local database_name
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup MariaDB${NC}${BLUE} :::...${NC}"
-    echo -ne " ${INPUT}↳${NC} Informe o nome do container MariaDB: "
-    read container_name
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do container MariaDB: "
+        read container_name
 
-    if [ -z "${container_name}" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
-        return 1
-    fi
+        if [ -z "${container_name}" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            continue
+        fi
 
-    if ! check_container_exists "${container_name}"; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
-        return 1
-    fi
+        if ! check_container_exists "${container_name}"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            continue
+        fi
+        break
+    done
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados MariaDB: "
+        read database_name
 
-    echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados MariaDB: "
-    read database_name
+        if [ -z "${database_name}" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            continue
+        fi
+        break
+    done
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
+        read backup_file_path
 
-    if [ -z "${database_name}" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
-        return 1
-    fi
-
-    echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
-    read backup_file_path
-
-    if [ ! -f "$backup_file_path" ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
-        return 1
-    fi
+        if [ ! -f "$backup_file_path" ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+            continue
+        fi
+        break
+    done
 
     if ! check_container_running "${container_name}"; then
         echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando o container..."
@@ -423,7 +423,6 @@ function restore_backup_mariadb() {
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}' no banco de dados '${database_name}'."
         return 1
     fi
-
     sleep 0.3
     main_menu
 }
@@ -431,9 +430,7 @@ function backup_mariadb() {
     local container_name
     local db_name
     local backup_file_path
-
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Backup MariaDB${NC}${BLUE} :::...${NC}"
-
     while true; do
         echo -ne " ${INPUT}↳${NC} Informe o nome do container MariaDB: "
         read container_name
@@ -503,8 +500,8 @@ function create_mysql_container() {
     local db_user
     local db_password
 
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MySQL${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MySQL${NC} ${BLUE}:::...${NC}"
         
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
@@ -513,19 +510,20 @@ function create_mysql_container() {
             break  
         fi
     done
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+        read db_user
 
-    echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
-    read db_user
+        echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+        read -s db_password
+        echo
 
-    echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
-    read -s db_password
-    echo
-
-    if [ -z "$db_user" ] || [ -z "$db_password" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
-        return 1
-    fi
-
+        if [ -z "$db_user" ] || [ -z "$db_password" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+            continue
+        fi
+        break
+    done
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
@@ -544,7 +542,7 @@ ENV MYSQL_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
     docker build -t mysql-image -f configs/Dockerfile-mysql .
 
     if [ $? -ne 0 ]; then
@@ -573,39 +571,44 @@ function restore_backup_mysql() {
     local database_name
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup${NC}${BLUE} :::...${NC}"
-    echo -ne " ${INPUT}↳${NC} Informe o nome do container: "
-    read container_name
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do container: "
+        read container_name
+        if [ -z "${container_name}" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            continue
+        fi
 
-    if [ -z "${container_name}" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
-        return 1
-    fi
+        if ! check_container_exists "$container_name"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            continue
+        fi
+        break
+    done
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados: "
+        read database_name
 
-    if ! check_container_exists "$container_name"; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
-        return 1
-    fi
+        if [ -z "${database_name}" ]; then
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            continue
+        fi
+        break
+    done
+    while true; do
+        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
+        read backup_file_path    
+        if [ ! -f "$backup_file_path" ]; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+            continue
+        fi
 
-    echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados: "
-    read database_name
-
-    if [ -z "${database_name}" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
-        return 1
-    fi
-
-    echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
-    read backup_file_path
-
-    if [ ! -f "$backup_file_path" ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
-        return 1
-    fi
-
-    if ! check_directory_exists "$(dirname "$backup_file_path")"; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
-        return 1
-    fi
+        if ! check_directory_exists "$(dirname "$backup_file_path")"; then
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
+            continue
+        fi
+        break
+    done
 
     if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
         echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando o container..."
@@ -645,7 +648,7 @@ function backup_mysql() {
     local db_name
     local backup_file_path
 
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Cria Backup${NC}${BLUE} :::..."
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criar Backup${NC}${BLUE} :::..."
 
     while true; do
         echo -ne " ${INPUT}↳${NC} Informe o nome do container MySQL: "
@@ -718,8 +721,8 @@ function apache_static_site(){
     local container_name
     local site_directory
 
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Container Apache${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Container Apache${NC} ${BLUE}:::...${NC}"
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
@@ -744,7 +747,7 @@ function apache_static_site(){
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão ocupadas. Não é possível criar o container."
         return 1
     fi
-     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando e iniciando container Apache${NC} ${BLUE}:::...${NC}"
+     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Criando e iniciando container Apache${NC} ${BLUE}<<<${NC}"
     docker run -d --name "$container_name" -p $suggested_port:80 -v "$site_directory":/usr/local/apache2/htdocs/ httpd:2.4
 
     if [ $? -eq 0 ]; then
@@ -762,8 +765,8 @@ function reverse_proxy_apache() {
     local container_name
     local upstream_url
 
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Apache (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Apache (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
@@ -812,7 +815,7 @@ COPY configs/httpd.conf /etc/apache2/sites-available/000-default.conf
 CMD ["apachectl", "-D", "FOREGROUND"]
 EOF
 
-    echo -e "${NL}${BLUE} ...:::${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} :::...${NC}"
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} <<<${NC}"
     docker build -t apache-reverse-proxy -f configs/Dockerfile-apache .
 
     if [ $? -ne 0 ]; then
@@ -840,8 +843,8 @@ function create_nginx_frontend_container() {
     local container_name
     local frontend_dir
 
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Nginx para Frontend${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Nginx para Frontend${NC} ${BLUE}:::...${NC}"
         
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
@@ -877,7 +880,7 @@ COPY frontend /usr/share/nginx/html
 EXPOSE 80
 EOF
 
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
     docker build -t frontend-image -f configs/Dockerfile-frontend configs
 
     if [ $? -ne 0 ]; then
@@ -903,8 +906,8 @@ EOF
 function reverse_proxy_nginx(){
     local container_name
     local upstream_url
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Nginx (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Nginx (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
@@ -944,7 +947,7 @@ FROM nginx:latest
 COPY configs/nginx.conf /etc/nginx/nginx.conf
 EOF
 
-    echo -e "${NL}${BLUE} ...:::${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} :::...${NC}"
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} <<<${NC}"
     docker build -t nginx-image -f configs/Dockerfile-nginx .
 
     if [ $? -ne 0 ]; then
@@ -974,8 +977,8 @@ function create_vsftpd_container() {
     local sftp_user
     local sftp_password
 
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
         
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
@@ -1023,7 +1026,7 @@ EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
     docker build -t sftp-image -f configs/Dockerfile-sftp .
 
     if [ $? -ne 0 ]; then
@@ -1053,8 +1056,8 @@ function create_ssh_sftp_container() {
     local sftp_user
     local sftp_password
 
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
         
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
@@ -1099,7 +1102,6 @@ Match User $sftp_user
 EOF
 
     cat > Dockerfile <<EOF
-# Usar a imagem Debian como base
 FROM debian:latest
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server \
@@ -1118,7 +1120,7 @@ EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
-    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
     docker build -t sftp-image .
 
     if [ $? -ne 0 ]; then
@@ -1596,7 +1598,6 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-
 echo -e "${BLUE}:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
 echo -e ":::                                                       :::"
 echo -e ":::${NC}              ██╗███████╗████████╗███╗   ███╗          ${BLUE}:::"
@@ -1607,13 +1608,11 @@ echo -e ":::${NC}              ██║██║        ██║   ██║ �
 echo -e ":::${NC}              ╚═╝╚═╝        ╚═╝   ╚═╝     ╚═╝          ${BLUE}:::"
 echo -e ":::${NC}   Instituto Federal de Educação, Ciência e Tecnologia ${BLUE}:::"
 echo -e ":::${NC}         do Triângulo Mineiro - Campus Paracatu        ${BLUE}:::"
-
 echo -e ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::${NC}"
 echo -e ""
 echo -e "𒁷  Autor:       Cristian Alves Silva"
 echo -e "𒁷  Orientador:  Prof. Claiton Luiz Soares"
 echo -e "𒁷  Curso:       Tecnologia em Análise e Desenvolvimento de Sistemas"
 echo -e "𒁷  Título:      Assistente de implantação de servidores linux em Docker"
-echo -e ""
-        
+echo -e "" 
 main_menu
