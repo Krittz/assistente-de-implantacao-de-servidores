@@ -1233,13 +1233,13 @@ function docker_uninstall(){
 
 # --->>> MENUS <<<---
 function apache_menu(){
-    echo -e "${NL}${BLUE} #######################################"
-    echo -e " ##              ${NC}${BOLD}APACHE   ${NC}${BLUE}            ##"
-    echo -e " ##...................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Hospedar um site estático   ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}##"
-    echo -e " #######################################${NC}"
+        echo -e "${NL}${BLUE}╔═════════════════════════════════════════╗"
+    echo -e "║                 ${NC}${BOLD}APACHE ${NC}${BLUE}                 ║"
+    echo -e "╠═════════════════════════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - Hospedar um site estático   ${BLUE}      ║"
+    echo -e "║${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}      ║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}      ║"
+    echo -e "╚═════════════════════════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r web_option
     case $web_option in
@@ -1254,7 +1254,7 @@ function apache_menu(){
         0)
             sleep 0.3
             clear
-            main_menu
+            web_server_menu
             ;;
         *)
             sleep 0.3
@@ -1266,13 +1266,13 @@ function apache_menu(){
 
 }
 function nginx_menu(){
-    echo -e "${NL}${BLUE} #######################################"
-    echo -e " ##               ${NC}${BOLD}NGINX  ${NC}${BLUE}             ##"
-    echo -e " ##...................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Hospedar um site estático   ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}##"
-    echo -e " #######################################${NC}"
+    echo -e "${NL}${BLUE}╔═════════════════════════════════════════╗"
+    echo -e "║                 ${NC}${BOLD}NGINX  ${NC}${BLUE}                 ║"
+    echo -e "╠═════════════════════════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - Hospedar um site estático   ${BLUE}      ║"
+    echo -e "║${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}      ║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}      ║"
+    echo -e "╚═════════════════════════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r web_option
     case $web_option in
@@ -1287,7 +1287,7 @@ function nginx_menu(){
         0)
             sleep 0.3
             clear
-            main_menu
+            web_server_menu
             ;;
         *)
             sleep 0.3
@@ -1299,13 +1299,13 @@ function nginx_menu(){
 
 }
 function web_server_menu(){
-    echo -e "${NL}${BLUE} ########################"
-    echo -e " ##     ${NC}${BOLD}WEB SERVERS${NC}${BLUE}    ##"
-    echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Apache       ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Nginx        ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
-    echo -e " ########################${NC}"
+    echo -e "${NL}${BLUE}╔═════════════════════════════╗"
+    echo -e "║          ${NC}${BOLD}WEB SERVERS${NC}${BLUE}        ║"
+    echo -e "╠═════════════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - Apache                ${BLUE}║"
+    echo -e "║${NC} [${INPUT}2${NC}] - Nginx                 ${BLUE}║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar                ${BLUE}║"
+    echo -e "╚═════════════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r server_option
     case $server_option in 
@@ -1330,16 +1330,15 @@ function web_server_menu(){
             ;;     
     esac
 }
-
 function mariadb_menu(){
-    echo -e "${NL}${BLUE} ################################################"
-    echo -e " ##                   ${NC}${BOLD}MARIADB${NC}${BLUE}                  ##"
-    echo -e " ##............................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
-    echo -e " ################################################${NC}"
+      echo -e "${NL}${BLUE}╔════════════════════════════════════════════╗"
+    echo -e "║                  ${NC}${BOLD}MARIADB${NC}${BLUE}                   ║"
+    echo -e "╠════════════════════════════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}║"
+    echo -e "║${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}║"
+    echo -e "║${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}║"
+    echo -e "╚════════════════════════════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r mariadb_option
     case $mariadb_option in
@@ -1370,14 +1369,14 @@ function mariadb_menu(){
     esac
 }
 function mysql_menu(){
-    echo -e "${NL}${BLUE} ################################################"
-    echo -e " ##                   ${NC}${BOLD}MySQL${NC}${BLUE}                    ##"
-    echo -e " ##............................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
-    echo -e " ################################################${NC}"
+    echo -e "${NL}${BLUE}╔════════════════════════════════════════════╗"
+    echo -e "║                    ${NC}${BOLD}MYSQL${NC}${BLUE}                   ║"
+    echo -e "╠════════════════════════════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}║"
+    echo -e "║${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}║"
+    echo -e "║${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}║"
+    echo -e "╚════════════════════════════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r mysql_option
     case $mysql_option in
@@ -1407,50 +1406,50 @@ function mysql_menu(){
     esac
 }
 function postgre_menu(){
-    echo -e "${NL}${BLUE} ################################################"
-    echo -e " ##              ${NC}${BOLD}PostgreSQL${NC}${BLUE}                    ##"
-    echo -e " ##............................................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}##"
-    echo -e " ################################################${NC}"
+    echo -e "${NL}${BLUE}╔════════════════════════════════════════════╗"
+    echo -e "║              ${NC}${BOLD}PostgreSQL${NC}${BLUE}                    ║"
+    echo -e "╠════════════════════════════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}║"
+    echo -e "║${NC} [${INPUT}2${NC}] - Restaurar um banco de dados          ${BLUE}║"
+    echo -e "║${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}║"
+    echo -e "╚════════════════════════════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r postgre_option
     case $postgre_option in
-    1)
-        sleep 0.3
-        create_postgresql_container
-        ;;
-    2)
-        sleep 0.3
-        restore_backup_postgresql
-        ;;
-    3)
-        sleep 0.3
-        backup_postgresql
-        ;;
-    0)
-        sleep 0.3
-        clear
-        database_menu
-        ;;
-    *)
-        sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-        sleep 0.3
-        postgre_menu
-        ;;
+        1)
+            sleep 0.3
+            create_postgresql_container
+            ;;
+        2)
+            sleep 0.3
+            restore_backup_postgresql
+            ;;
+        3)
+            sleep 0.3
+            backup_postgresql
+            ;;
+        0)
+            sleep 0.3
+            clear
+            database_menu
+            ;;
+        *)
+            sleep 0.3
+            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+            sleep 0.3
+            postgre_menu
+            ;;
     esac
 }
 function sfpt_menu(){
-    echo -e "${NL}${BLUE} ########################"
-    echo -e " ##   ${NC}${BOLD}SERVIDORES SFTP${NC}${BLUE}  ##"
-    echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - OpenSSH      ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - vsftpd       ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
-    echo -e " ########################${NC}"
+    echo -e "${NL}${BLUE}╔═══════════════════════╗"
+    echo -e "║     ${NC}${BOLD}SERVIDORES SFTP${NC}${BLUE}   ║"
+    echo -e "╠═══════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - OpenSSH         ${BLUE}║"
+    echo -e "║${NC} [${INPUT}2${NC}] - vsftpd          ${BLUE}║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar          ${BLUE}║"
+    echo -e "╚═══════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r server_option
 
@@ -1477,14 +1476,14 @@ function sfpt_menu(){
     esac
 }
 function database_menu(){
-    echo -e "${NL}${BLUE} #########################"
-    echo -e " ##   ${NC}${BOLD}BANCOS DE DADOS${NC}${BLUE}   ##"
-    echo -e " ##.....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - MySQL         ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - MariaDB       ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}3${NC}] - PostgreSQL    ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar        ${BLUE}##"
-    echo -e " #########################${NC}"
+    echo -e "${NL}${BLUE}╔═══════════════════════╗"
+    echo -e "║    ${NC}${BOLD}BANCOS DE DADOS${NC}${BLUE}    ║"
+    echo -e "╠═══════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - MySQL           ${BLUE}║"
+    echo -e "║${NC} [${INPUT}2${NC}] - MariaDB         ${BLUE}║"
+    echo -e "║${NC} [${INPUT}3${NC}] - PostgreSQL      ${BLUE}║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar          ${BLUE}║"
+    echo -e "╚═══════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r database_option
     case $database_option in
@@ -1514,13 +1513,13 @@ function database_menu(){
     esac
 }
 function docker_menu(){
-    echo -e "${NL}${BLUE} ########################"
-    echo -e " ##       ${NC}${BOLD}DOCKER${NC}${BLUE}       ##"
-    echo -e " ##....................##"
-    echo -e " ##${NC} [${INPUT}1${NC}] - Instalar     ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}2${NC}] - Desinstalar  ${BLUE}##"
-    echo -e " ##${NC} [${INPUT}0${NC}] - Voltar       ${BLUE}##"
-    echo -e " ########################${NC}"
+    echo -e "${NL}${BLUE}╔══════════════════════════════╗"
+    echo -e "║           ${NC}${BOLD}DOCKER${NC}${BLUE}             ║"
+    echo -e "╠══════════════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - Instalar             ${BLUE}  ║"
+    echo -e "║${NC} [${INPUT}2${NC}] - Desinstalar          ${BLUE}  ║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar               ${BLUE}  ║"
+    echo -e "╚══════════════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r docker_option
     case $docker_option in
@@ -1545,16 +1544,16 @@ function docker_menu(){
 }
 function main_menu(){
     while true; do
-        echo -e "${NL}${BLUE}             ###################################"
-        echo -e "██╗███████╗  ##         ${NC}${BOLD}MENU PRINCIPAL        ${BLUE}##"
-        echo -e "██║██╔════╝  ##...............................##" 
-        echo -e "██║█████╗    ##${NC} [${INPUT}1${NC}] - Docker                  ${BLUE}##"
-        echo -e "██║██╔══╝    ##${NC} [${INPUT}2${NC}] - Servidores Web          ${BLUE}##"
-        echo -e "██║██║       ##${NC} [${INPUT}3${NC}] - Servidores FTP          ${BLUE}##"
-        echo -e "╚═╝╚═╝       ##${NC} [${INPUT}4${NC}] - Bancos de Dados         ${BLUE}##"
-        echo -e "             ##${NC} [${INPUT}0${NC}] - Sair                    ${BLUE}##"
-        echo -e "             ###################################${NC}"      
-        echo -e "               ${INPUT}↳${NC} Selecione uma opção: "  
+        echo -e "${NL}${BLUE}╔══════════════════════════════╗"
+        echo -e "║        ${NC}${BOLD}MENU PRINCIPAL        ${BLUE}║"
+        echo -e "╠══════════════════════════════╣" 
+        echo -e "║${NC} [${INPUT}1${NC}] - Docker                 ${BLUE}║"
+        echo -e "║${NC} [${INPUT}2${NC}] - Servidores Web         ${BLUE}║"
+        echo -e "║${NC} [${INPUT}3${NC}] - Servidores SFTP        ${BLUE}║"
+        echo -e "║${NC} [${INPUT}4${NC}] - Bancos de Dados        ${BLUE}║"
+        echo -e "║${NC} [${INPUT}0${NC}] - Sair                   ${BLUE}║"
+        echo -e "╚══════════════════════════════╝${NC}"      
+        echo -ne "${INPUT}↳${NC} Selecione uma opção: "  
         read -r menu_option
 
         case $menu_option in
@@ -1596,16 +1595,25 @@ if [ "$(id -u)" -ne 0 ]; then
     echo -e "${NL}${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Por favor execute esse script como root!${NL}"
     exit 1
 fi
-#main_menu
 
 
+echo -e "${BLUE}:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
+echo -e ":::                                                       :::"
+echo -e ":::${NC}              ██╗███████╗████████╗███╗   ███╗          ${BLUE}:::"
+echo -e ":::${NC}              ██║██╔════╝╚══██╔══╝████╗ ████║          ${BLUE}:::"
+echo -e ":::${NC}              ██║█████╗     ██║   ██╔████╔██║          ${BLUE}:::"
+echo -e ":::${NC}              ██║██╔══╝     ██║   ██║╚██╔╝██║          ${BLUE}:::"
+echo -e ":::${NC}              ██║██║        ██║   ██║ ╚═╝ ██║          ${BLUE}:::"
+echo -e ":::${NC}              ╚═╝╚═╝        ╚═╝   ╚═╝     ╚═╝          ${BLUE}:::"
+echo -e ":::${NC}   Instituto Federal de Educação, Ciência e Tecnologia ${BLUE}:::"
+echo -e ":::${NC}         do Triângulo Mineiro - Campus Paracatu        ${BLUE}:::"
 
-echo -e " ______   ____    ______            "
-echo -e "/\__  _\ /\  _`\ /\__  _\/'\_/`\    "
-echo -e "\/_/\ \/ \ \ \L\_\/_/\ \/\      \   "
-echo -e "   \ \ \  \ \  _\/  \ \ \ \ \__\ \  "
-echo -e "    \_\ \__\ \ \/    \ \ \ \ \_/\ \ "
-echo -e "    /\_____\\ \_\     \ \_\ \_\\ \_\"
-echo -e "    \/_____/ \/_/      \/_/\/_/ \/_/"
-                                    
-                                    
+echo -e ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::${NC}"
+echo -e ""
+echo -e "𒁷  Autor:       Cristian Alves Silva"
+echo -e "𒁷  Orientador:  Prof. Claiton Luiz Soares"
+echo -e "𒁷  Curso:       Tecnologia em Análise e Desenvolvimento de Sistemas"
+echo -e "𒁷  Título:      Assistente de implantação de servidores linux em Docker"
+echo -e ""
+        
+main_menu
