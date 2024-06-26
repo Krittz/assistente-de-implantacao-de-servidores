@@ -1101,7 +1101,7 @@ Match User $sftp_user
     AllowTcpForwarding no
 EOF
 
-    cat > Dockerfile <<EOF
+    cat > configs/Dockerfile <<EOF
 FROM debian:latest
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server \
