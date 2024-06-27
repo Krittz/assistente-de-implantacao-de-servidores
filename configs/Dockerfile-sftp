@@ -1,0 +1,12 @@
+FROM ubuntu:latest
+RUN apt-get update && apt-get install -y openssh-server
+RUN mkdir /var/run/sshd
+RUN echo 'root:screencast' | chpasswd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+RUN mkdir /home/cristian
+RUN useradd -d /home/cristian -s /bin/bash cristian
+RUN echo 'cristian:calangos' | chpasswd
+RUN chown -R cristian:cristian /home/cristian
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]

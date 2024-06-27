@@ -1011,7 +1011,7 @@ function create_vsftpd_container() {
 
     mkdir -p configs
 
-    cat > configs/Dockerfile-sftp <<EOF
+    cat > configs/Dockerfile-vsftpd <<EOF
 FROM ubuntu:latest
 RUN apt-get update && apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
@@ -1027,7 +1027,7 @@ CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
-    docker build -t sftp-image -f configs/Dockerfile-sftp .
+    docker build -t sftp-image -f configs/Dockerfile-vsftpd .
 
     if [ $? -ne 0 ]; then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
@@ -1101,7 +1101,7 @@ Match User $sftp_user
     AllowTcpForwarding no
 EOF
 
-    cat > configs/Dockerfile <<EOF
+    cat > configs/Dockerfile-ssh <<EOF
 FROM debian:latest
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server \
@@ -1121,7 +1121,7 @@ CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
-    docker build -t sftp-image .
+    docker build -t sftp-image -f configs/Dockerfile-ssh .
 
     if [ $? -ne 0 ]; then
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
