@@ -13,6 +13,13 @@ NL='\n'
 BLINK='\033[5m'
 
 # --->>> FUNÇÕES USUAIS <<<---
+function check_docker_installed() {
+    if ! command -v docker &> /dev/null; then
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠${NC}: Docker não está instalado. Por favor, instale o Docker antes de continuar."
+        return 1
+    fi
+    return 0
+}
 function check_container_name(){
     local container_name=$1
     if [ -z "$container_name" ]; then
@@ -1149,8 +1156,7 @@ EOF
 # --->>> DOCKER <<<---
 function docker_install(){
     echo ""
-    docker --version
-    if [ $? -eq 0 ]; then
+    if command -v docker &> /dev/null; then
         sleep 0.3 
         echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker já está instalado!"
         sleep 0.3
@@ -1214,28 +1220,29 @@ function docker_install(){
     fi
 }
 function docker_uninstall(){
-    echo ""
-    docker --version
-    if ! [ $? -eq 0 ]; then
+    
+    check_docker_installed
+    if [ $? -ne 0 ]; then
         sleep 0.3
         echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker não está instalado!"
         sleep 0.3
-    else
-        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Desinstalando Docker ${NC}${BLUE}<<<${NC}"
-        rm /usr/share/keyrings/docker-archive-keyring.gpg
-        apt purge docker-ce docker-ce-cli containerd.io -y && apt autoremove -y
-        apt clean
-        groupdel docker
-        sleep 0.3
-        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker desinstalado!"
-        sleep 0.3
+        return
     fi
+    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Desinstalando Docker ${NC}${BLUE}<<<${NC}"
+    rm /usr/share/keyrings/docker-archive-keyring.gpg
+    apt purge docker-ce docker-ce-cli containerd.io -y && apt autoremove -y
+    apt clean
+    groupdel docker
+    sleep 0.3
+    echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker desinstalado!"
+    sleep 0.3
 }
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
 function apache_menu(){
-        echo -e "${NL}${BLUE}╔═════════════════════════════════════════╗"
+    
+    echo -e "${NL}${BLUE}╔═════════════════════════════════════════╗"
     echo -e "║                 ${NC}${BOLD}APACHE ${NC}${BLUE}                 ║"
     echo -e "╠═════════════════════════════════════════╣"
     echo -e "║${NC} [${INPUT}1${NC}] - Hospedar um site estático   ${BLUE}      ║"
@@ -1301,6 +1308,11 @@ function nginx_menu(){
 
 }
 function web_server_menu(){
+    check_docker_installed
+    if [ $? -ne 0 ]; then
+        sleep 0.3
+        return
+    fi
     echo -e "${NL}${BLUE}╔═════════════════════════════╗"
     echo -e "║          ${NC}${BOLD}WEB SERVERS${NC}${BLUE}        ║"
     echo -e "╠═════════════════════════════╣"
@@ -1333,7 +1345,7 @@ function web_server_menu(){
     esac
 }
 function mariadb_menu(){
-      echo -e "${NL}${BLUE}╔════════════════════════════════════════════╗"
+    echo -e "${NL}${BLUE}╔════════════════════════════════════════════╗"
     echo -e "║                  ${NC}${BOLD}MARIADB${NC}${BLUE}                   ║"
     echo -e "╠════════════════════════════════════════════╣"
     echo -e "║${NC} [${INPUT}1${NC}] - Criar um container novo              ${BLUE}║"
@@ -1445,6 +1457,11 @@ function postgre_menu(){
     esac
 }
 function sfpt_menu(){
+    check_docker_installed
+    if [ $? -ne 0 ]; then
+        sleep 0.3
+        return
+    fi
     echo -e "${NL}${BLUE}╔═══════════════════════╗"
     echo -e "║     ${NC}${BOLD}SERVIDORES SFTP${NC}${BLUE}   ║"
     echo -e "╠═══════════════════════╣"
@@ -1478,6 +1495,11 @@ function sfpt_menu(){
     esac
 }
 function database_menu(){
+    check_docker_installed
+    if [ $? -ne 0 ]; then
+        sleep 0.3
+        return
+    fi
     echo -e "${NL}${BLUE}╔═══════════════════════╗"
     echo -e "║    ${NC}${BOLD}BANCOS DE DADOS${NC}${BLUE}    ║"
     echo -e "╠═══════════════════════╣"
@@ -1613,6 +1635,6 @@ echo -e ""
 echo -e "𒁷  Autor:       Cristian Alves Silva"
 echo -e "𒁷  Orientador:  Prof. Claiton Luiz Soares"
 echo -e "𒁷  Curso:       Tecnologia em Análise e Desenvolvimento de Sistemas"
-echo -e "𒁷  Título:      Assistente de implantação de servidores linux em Docker"
+echo -e "𒁷  Título:      Assistente de implantação de servidores em Docker"
 echo -e "" 
 main_menu
