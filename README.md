@@ -31,4 +31,14 @@ Neste Script você encontrará a instalação completo do Docker, e a criação 
 ```bash
 git clone https://github.com/seu-usuario/seu-repositorio.git
 cd seu-repositorio
+```
+### 2. Conceder permissão de execução
+
+```bash
+sudo chmod +x script.sh
+```
+### 3. Executar o script
+
+```bash
 sudo ./script.sh
+```
