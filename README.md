@@ -2,8 +2,14 @@
 
 ## Descrição
 
-Este script foi desenvolvido para facilitar a criação e gerenciamento de containers Docker em sistemas Linux, para servidores web como, Apache e NGINX, servidores SFTP como, VSFTPD e bancos de dados MySQL, MariaDB e PostgreSQL.
-Ele inclui funções para criar containers, realizar backups e restaurar bancos de dados.
+Este script foi desenvolvido para facilitar a criação e gerenciamento de containers Docker em sistemas Linux, tendo disponíveis: servidores web; servidores SFTP; e bancos de dados.
+A ideia deste projeto é automatizar tarefas rotineiras para desenvolvedores, facilitando e padronizando a configuração de ambientes de desenvovlimento, economizando tempo e trazendo facilidade
+para usuários com menos conhecimento.
+Neste Script você encontrará a instalação completo do Docker, e a criação de containers para serviços importantes no dia a dia, como:
+- Bancos de dados;
+- Servidores web para testar suas aplicações, proxy reverso;
+- Servidores seguros de transferência de arquivos.
+
 
 ## Funcionalidades
 
