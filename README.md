@@ -31,7 +31,9 @@ Neste Script você encontrará a instalação completo do Docker, e a criação 
 ```bash
 git clone https://github.com/Krittz/assistente-de-implantacao-de-servidores.git
 cd assistente-de-implantacao-de-servidores/
+```
 ou
+```bash
 git clone git@github.com:Krittz/assistente-de-implantacao-de-servidores.git
 cd assistente-de-implantacao-de-servidores/
 ```
