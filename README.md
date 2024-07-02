@@ -29,8 +29,11 @@ Neste Script você encontrará a instalação completo do Docker, e a criação 
 ### 1. Clonar o Repositório
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd seu-repositorio
+git clone https://github.com/Krittz/assistente-de-implantacao-de-servidores.git
+cd assistente-de-implantacao-de-servidores/
+ou
+git clone git@github.com:Krittz/assistente-de-implantacao-de-servidores.git
+cd assistente-de-implantacao-de-servidores/
 ```
 ### 2. Conceder permissão de execução
 
