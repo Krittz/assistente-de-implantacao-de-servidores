@@ -15,11 +15,11 @@ BLINK='\033[5m'
 # --->>> FUNÇÕES USUAIS <<<---
 function check_docker_installed() {
     if ! command -v docker &>/dev/null; then
-        echo -e "${NL}...................${WARNING}${BOLD}⚠  AVISO ⚠${NC} ..................."
-        echo -e ":  Docker não está instalado.                   : "
-        echo -e ":  Por favor, instale o Docker para prosseguir. : "
-        echo -e ":...............................................:${NL}"
 
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Docker não está instalado. ${NL}  Por favor, instale antes de prosseguir"
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+        sleep 1
         return 1
     fi
     return 0
@@ -27,7 +27,10 @@ function check_docker_installed() {
 function check_container_name() {
     local container_name=$1
     if [ -z "$container_name" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Nome do container não pode ser vazio."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
     if [ ! -z "$(docker ps -a --filter name=^/${container_name}$ --format '{{.Names}}')" ]; then
@@ -104,7 +107,9 @@ function create_postgresql_container() {
         echo
 
         if [ -z "$db_user" ] || [ -z "$db_password" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Usuário e senha não podem ser vazios."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
@@ -112,7 +117,11 @@ function create_postgresql_container() {
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 5432 5432 5499); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 5432 e 5499 estão ocupadas. Não é possível criar o container."
+
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 5432 e 5499 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -124,12 +133,14 @@ ENV POSTGRES_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
     docker build -t postgresql-image -f configs/Dockerfile-postgresql .
 
     if [ $? -ne 0 ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao construir a imagem Docker."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -144,7 +155,9 @@ EOF
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -323,7 +336,9 @@ function create_mariadb_container() {
         echo
 
         if [ -z "$db_user" ] || [ -z "$db_password" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Usuário e senha não podem ser vazios."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
@@ -331,7 +346,10 @@ function create_mariadb_container() {
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 3306 e 3399 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -347,13 +365,15 @@ ENV MARIADB_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
 
     docker build -t mariadb-image -f configs/Dockerfile-mariadb .
 
     if [ $? -ne 0 ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao construir a imagem Docker."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -368,7 +388,9 @@ EOF
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 }
@@ -547,14 +569,20 @@ function create_mysql_container() {
         echo
 
         if [ -z "$db_user" ] || [ -z "$db_password" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Usuário e senha não podem ser vazios."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
     done
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 3306 3306 3399); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 3306 e 3399 estão ocupadas. Não é possível criar o container."
+
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 3306 e 3399 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -570,13 +598,14 @@ ENV MYSQL_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
-    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
-
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
     docker build -t mysql-image -f configs/Dockerfile-mysql .
 
     if [ $? -ne 0 ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao construir a imagem Docker."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -591,7 +620,9 @@ EOF
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 }
@@ -649,8 +680,8 @@ function restore_backup_mysql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando a existência do banco de dados '${database_name}' no container '${container_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}VERIFICANDO A EXISTÊNCIA DO BANCO DE DADOS '${database_name}' NO CONTAINER '${container_name}'"
+    echo -e "----------------------------------------------------------------------------------${NC}${NL}"
 
     db_exists=$(docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
     if [ -z "$db_exists" ]; then
@@ -662,9 +693,8 @@ function restore_backup_mysql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' no banco de dados '${database_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
-
+    echo -e "${NL}${BLUE}${BOLD}RESTAURANDO O BACKUP NO CONTAINER '${container_name}' NO BANCO DE DADOS '${database_name}'"
+    echo -e "----------------------------------------------------------------------------------${NC}${NL}"
     docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} ${database_name}" <"$backup_file_path"
 
     if [ $? -eq 0 ]; then
@@ -735,8 +765,8 @@ function backup_mysql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CRIANDO BACKUP DO BANCO DE DADOS '${db_name}'"
+    echo -e "-------------------------------------------${NC}${NL}"
 
     docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MYSQL_ROOT_PASSWORD} ${db_name}" >"$backup_file_path"
 
@@ -780,11 +810,14 @@ function apache_static_site() {
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 8080 8099); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão ocupadas. Não é possível criar o container."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 8080 e 8099 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
-    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Criando e iniciando container Apache${NC} ${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
 
     docker run -d --name "$container_name" -p $suggested_port:80 -v "$site_directory":/usr/local/apache2/htdocs/ httpd:2.4
 
@@ -795,7 +828,9 @@ function apache_static_site() {
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 }
@@ -818,7 +853,10 @@ function reverse_proxy_apache() {
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 8080 8099); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão indisponíveis. Não é possível criar o container."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 8080 e 8099 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -852,13 +890,15 @@ COPY configs/httpd.conf /etc/apache2/sites-available/000-default.conf
 CMD ["apachectl", "-D", "FOREGROUND"]
 EOF
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} <<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
 
     docker build -t apache-reverse-proxy -f configs/Dockerfile-apache .
 
     if [ $? -ne 0 ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao construir a imagem Docker."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -872,7 +912,9 @@ EOF
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 }
@@ -906,7 +948,10 @@ function create_nginx_frontend_container() {
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 8080 8080 8099); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão ocupadas. Não é possível criar o container."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 8080 e 8099 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -919,13 +964,15 @@ COPY frontend /usr/share/nginx/html
 EXPOSE 80
 EOF
 
-    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
 
     docker build -t frontend-image -f configs/Dockerfile-frontend configs
 
     if [ $? -ne 0 ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao construir a imagem Docker."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -939,7 +986,9 @@ EOF
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 }
@@ -962,7 +1011,10 @@ function reverse_proxy_nginx() {
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 8080 8099); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão indisponíveis. Não é possível criar o container."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 8080 e 8099 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -988,13 +1040,15 @@ FROM nginx:latest
 COPY configs/nginx.conf /etc/nginx/nginx.conf
 EOF
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} <<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
 
     docker build -t nginx-image -f configs/Dockerfile-nginx .
 
     if [ $? -ne 0 ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao construir a imagem Docker."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -1008,7 +1062,9 @@ EOF
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 }
@@ -1042,13 +1098,19 @@ function create_vsftpd_container() {
         if [ -n "$sftp_user" ] && [ -n "$sftp_password" ]; then
             break
         else
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Usuário e senha não podem ser vazios."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
         fi
     done
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 22 22 29); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 22 e 29 estão ocupadas. Não é possível criar o container."
+
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 22 e 29 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -1069,13 +1131,15 @@ EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
-    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE} <<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
 
     docker build -t sftp-image -f configs/Dockerfile-vsftpd .
 
     if [ $? -ne 0 ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao construir a imagem Docker."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -1090,7 +1154,9 @@ EOF
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 }
@@ -1123,13 +1189,18 @@ function create_ssh_sftp_container() {
         if [ -n "$sftp_user" ] && [ -n "$sftp_password" ]; then
             break
         else
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Usuário e senha não podem ser vazios!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Usuário e senha não podem ser vazios."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
         fi
     done
 
     local suggested_port
     if ! suggested_port=$(check_and_suggest_port 2222 2299); then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 2222 e 2299 estão ocupadas. Não é possível criar o container."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Não foi possível criar o container."
+        echo -e "  Todas as portas entre 2222 e 2299 estão ocupadas."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -1165,13 +1236,15 @@ EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
-    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
+    echo -e "-------------------------------------${NC}${NL}"
 
     docker build -t sftp-image -f configs/Dockerfile-ssh .
 
     if [ $? -ne 0 ]; then
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao construir a imagem Docker."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao construir a imagem Docker."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -1188,7 +1261,9 @@ EOF
         sleep 0.3
         main_menu
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar o container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 }
@@ -1213,8 +1288,8 @@ function docker_install() {
             sleep 0.3
             return
         fi
-        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Instalando pacotes necessários ${NC}${BLUE}<<<${NC}"
-        echo -e "${BLUE}....................................................${NC}${NL}"
+        echo -e "${NL}${BLUE}${BOLD}INSTALANDO PACOTES NECESSÁRIOS"
+        echo -e "-------------------------------------${NC}${NL}"
 
         apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
         if [ $? -ne 0 ]; then
@@ -1223,8 +1298,9 @@ function docker_install() {
             sleep 0.3
             return
         fi
-        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando chave GPG do repositório Docker ${NC}${BLUE}<<<${NC}"
-        echo -e "${BLUE}....................................................${NC}${NL}"
+
+        echo -e "${NL}${BLUE}${BOLD}ADICIONANDO CHAVE GPG DO REPOSITÓRIO DOCKER"
+        echo -e "-----------------------------------------------${NC}${NL}"
 
         curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
         if [ $? -ne 0 ]; then
@@ -1233,14 +1309,14 @@ function docker_install() {
             sleep 0.3
             return
         fi
-        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando repositório Docker ao sistema ${NC}${BLUE}<<<${NC}"
-        echo -e "${BLUE}....................................................${NC}${NL}"
+        echo -e "${NL}${BLUE}${BOLD}ADICIONANDO REPOSITÓRIO DOCKER AO SISTEMA"
+        echo -e "-----------------------------------------------${NC}${NL}"
 
         echo "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
         apt update
 
-        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Instalando Docker Engine ${NC}${BLUE}<<<${NC}"
-        echo -e "${BLUE}....................................................${NC}${NL}"
+        echo -e "${NL}${BLUE}${BOLD}INSTALANDO DOCKER ENGINE"
+        echo -e "--------------------------------------${NC}${NL}"
 
         apt install -y docker-ce docker-ce-cli containerd.io
         if [ $? -ne 0 ]; then
@@ -1250,8 +1326,8 @@ function docker_install() {
             return
         fi
 
-        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando usuário ao grupo Docker ${NC}${BLUE}<<<${NC}"
-        echo -e "${BLUE}....................................................${NC}${NL}"
+        echo -e "${NL}${BLUE}${BOLD}ADICIONANDO USUÁRIO AO GRUPO DOCKER"
+        echo -e "--------------------------------------${NC}${NL}"
 
         echo -ne " ${INPUT}↳${NC} Informe o nome do usuário que utilizará o Docker: "
         read -r usr
@@ -1272,7 +1348,6 @@ function docker_install() {
     fi
 }
 function docker_uninstall() {
-
     check_docker_installed
     if [ $? -ne 0 ]; then
         sleep 0.3
@@ -1280,8 +1355,8 @@ function docker_uninstall() {
         sleep 0.3
         return
     fi
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Desinstalando Docker ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}DESINSTALANDO O DOCKER "
+    echo -e "--------------------------------${NC}${NL}"
 
     rm /usr/share/keyrings/docker-archive-keyring.gpg
     apt purge docker-ce docker-ce-cli containerd.io -y && apt autoremove -y
@@ -1321,7 +1396,9 @@ function apache_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         apache_menu
         ;;
@@ -1354,7 +1431,9 @@ function nginx_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         nginx_menu
         ;;
@@ -1392,7 +1471,9 @@ function web_server_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         web_server_menu
         ;;
@@ -1429,7 +1510,9 @@ function mariadb_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         mariadb_menu
         ;;
@@ -1467,7 +1550,9 @@ function mysql_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         mysql_menu
         ;;
@@ -1505,6 +1590,9 @@ function postgre_menu() {
     *)
         sleep 0.3
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         postgre_menu
         ;;
@@ -1542,7 +1630,9 @@ function sfpt_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         sftp_menu
         ;;
@@ -1584,7 +1674,9 @@ function database_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         database_menu
         ;;
@@ -1615,7 +1707,9 @@ function docker_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
         ;;
@@ -1670,7 +1764,9 @@ function main_menu() {
             ;;
         *)
             sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Opção inválida."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
             sleep 0.3
             main_menu
             ;;
@@ -1678,12 +1774,11 @@ function main_menu() {
     done
 }
 if [ "$(id -u)" -ne 0 ]; then
-    echo -e "${NL}..................${WARNING}${BOLD}⚠  AVISO ⚠${NC} ................"
-    echo -e ":  Por favor execute esse script como root! : "
-    echo -e ":...........................................:${NL}"
+    echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+    echo -e "  Por favor execute esse script como root!"
+    echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
     exit 1
 fi
-
 echo -e "${BLUE}:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::"
 echo -e ":::                                                       :::"
 echo -e ":::${NC}              ██╗███████╗████████╗███╗   ███╗          ${BLUE}:::"
@@ -1701,4 +1796,5 @@ echo -e "𒁷  Orientador:  Prof. Dr. Claiton Luiz Soares"
 echo -e "𒁷  Curso:       Tecnologia em Análise e Desenvolvimento de Sistemas"
 echo -e "𒁷  Título:      Assistente de implantação de servidores em Docker"
 echo -e ""
+
 main_menu
