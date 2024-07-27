@@ -2,7 +2,7 @@
 ERROR='\033[0;31m'
 INPUT='\033[0;32m'
 WARNING='\033[1;33m'
-INFO='\033[0;33m' 
+INFO='\033[0;33m'
 SUCCESS='\033[0;36m'
 BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
@@ -14,13 +14,17 @@ BLINK='\033[5m'
 
 # --->>> FUNÇÕES USUAIS <<<---
 function check_docker_installed() {
-    if ! command -v docker &> /dev/null; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠${NC}: Docker não está instalado. Por favor, instale o Docker antes de continuar."
+    if ! command -v docker &>/dev/null; then
+        echo -e "${NL}╔═════════════════${WARNING}${BOLD}⚠  AVISO ⚠${NC} ═══════════════════╗"
+        echo -e "║  Docker não está instalado.                   ║ "
+        echo -e "║  Por favor, instale o Docker para prosseguir. ║ "
+        echo -e "╚═══════════════════════════════════════════════╝${NL}"
+      
         return 1
     fi
     return 0
 }
-function check_container_name(){
+function check_container_name() {
     local container_name=$1
     if [ -z "$container_name" ]; then
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
@@ -29,7 +33,7 @@ function check_container_name(){
     if [ ! -z "$(docker ps -a --filter name=^/${container_name}$ --format '{{.Names}}')" ]; then
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome '${container_name}' indisponível! Tente novamente. "
         return 1
-    else   
+    else
         echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Nome do container '${container_name}' está disponível."
         return 0
     fi
@@ -52,18 +56,18 @@ function check_and_suggest_port() {
             fi
         done
         echo ""
-        return 1    
+        return 1
     else
         echo "$port"
         return 0
     fi
 }
 function check_container_exists() {
-    local container_name="$1"   
+    local container_name="$1"
     if [ ! -z "$(docker ps -a --filter name=^/${container_name}$ --format '{{.Names}}')" ]; then
-        return 0  
+        return 0
     else
-        return 1  
+        return 1
     fi
 }
 function check_directory_exists() {
@@ -88,7 +92,7 @@ function create_postgresql_container() {
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
         if check_container_name "$container_name"; then
-            break  
+            break
         fi
     done
     while true; do
@@ -114,13 +118,14 @@ function create_postgresql_container() {
 
     mkdir -p configs
 
-    cat > configs/Dockerfile-postgresql <<EOF
+    cat >configs/Dockerfile-postgresql <<EOF
 FROM postgres:latest
 ENV POSTGRES_PASSWORD=$db_password
 EXPOSE $suggested_port
 EOF
 
     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
     docker build -t postgresql-image -f configs/Dockerfile-postgresql .
 
     if [ $? -ne 0 ]; then
@@ -198,6 +203,8 @@ function restore_backup_postgresql() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando se o banco de dados '${db_name}' existe ${NC}${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     if ! docker exec "$container_name" psql -U postgres -lqt | cut -d \| -f 1 | grep -qw "$db_name"; then
         echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${db_name}' não existe. Criando banco de dados..."
         docker exec "$container_name" psql -U postgres -c "CREATE DATABASE ${db_name};"
@@ -208,6 +215,8 @@ function restore_backup_postgresql() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     cat "$backup_file_path" | docker exec -i "$container_name" sh -c "exec psql -U postgres -d ${db_name}"
 
     if [ $? -eq 0 ]; then
@@ -220,7 +229,7 @@ function restore_backup_postgresql() {
     sleep 0.3
     main_menu
 }
-function backup_postgresql(){
+function backup_postgresql() {
     local container_name
     local db_name
     local backup_file_path
@@ -268,7 +277,7 @@ function backup_postgresql(){
     done
 
     if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..." 
+        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..."
         docker start "$container_name"
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
@@ -277,7 +286,9 @@ function backup_postgresql(){
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec "$container_name" sh -c "exec pg_dump -U postgres ${db_name}" > "$backup_file_path"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
+    docker exec "$container_name" sh -c "exec pg_dump -U postgres ${db_name}" >"$backup_file_path"
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
@@ -285,7 +296,7 @@ function backup_postgresql(){
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${db_name}'."
         return 1
     fi
-    sleep 0.3 
+    sleep 0.3
     main_menu
 }
 # --->>> //POSTGRESQL <<<---
@@ -296,11 +307,11 @@ function create_mariadb_container() {
     local db_password
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
-    while true; do        
+    while true; do
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
         if check_container_name "$container_name"; then
-            break  
+            break
         fi
     done
     while true; do
@@ -326,7 +337,7 @@ function create_mariadb_container() {
 
     mkdir -p configs
 
-    cat > configs/Dockerfile-mariadb <<EOF
+    cat >configs/Dockerfile-mariadb <<EOF
 FROM mariadb:latest
 # Definir variáveis de ambiente para o MariaDB
 ENV MARIADB_ROOT_PASSWORD=$db_password
@@ -337,6 +348,8 @@ EXPOSE $suggested_port
 EOF
 
     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     docker build -t mariadb-image -f configs/Dockerfile-mariadb .
 
     if [ $? -ne 0 ]; then
@@ -411,9 +424,13 @@ function restore_backup_mariadb() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando a existência do banco de dados '${database_name}' no container '${container_name}' ${NC}${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     db_exists=$(docker exec "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
     if [ -z "$db_exists" ]; then
         echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${database_name}' não existe. Criando o banco de dados..."
+        echo -e "${BLUE}....................................................${NC}${NL}"
+
         docker exec "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${database_name}'."
@@ -422,7 +439,9 @@ function restore_backup_mariadb() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' no banco de dados '${database_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec -i "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} ${database_name}" < "$backup_file_path"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
+    docker exec -i "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} ${database_name}" <"$backup_file_path"
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}' no banco de dados '${database_name}'."
@@ -488,7 +507,9 @@ function backup_mariadb() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec "$container_name" sh -c "exec mariadb-dump -u root -p\${MARIADB_ROOT_PASSWORD} ${db_name}" > "$backup_file_path"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
+    docker exec "$container_name" sh -c "exec mariadb-dump -u root -p\${MARIADB_ROOT_PASSWORD} ${db_name}" >"$backup_file_path"
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
@@ -509,12 +530,12 @@ function create_mysql_container() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MySQL${NC} ${BLUE}:::...${NC}"
     while true; do
-        
+
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
-            break  
+            break
         fi
     done
     while true; do
@@ -539,7 +560,7 @@ function create_mysql_container() {
 
     mkdir -p configs
 
-    cat > configs/Dockerfile-mysql <<EOF
+    cat >configs/Dockerfile-mysql <<EOF
 FROM mysql:latest
 # Definir variáveis de ambiente para o MySQL
 ENV MYSQL_ROOT_PASSWORD=$db_password
@@ -550,6 +571,8 @@ EXPOSE $suggested_port
 EOF
 
     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     docker build -t mysql-image -f configs/Dockerfile-mysql .
 
     if [ $? -ne 0 ]; then
@@ -604,7 +627,7 @@ function restore_backup_mysql() {
     done
     while true; do
         echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
-        read backup_file_path    
+        read backup_file_path
         if [ ! -f "$backup_file_path" ]; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
             continue
@@ -627,6 +650,8 @@ function restore_backup_mysql() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando a existência do banco de dados '${database_name}' no container '${container_name}' ${NC}${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     db_exists=$(docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
     if [ -z "$db_exists" ]; then
         echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${database_name}' não existe. Criando o banco de dados..."
@@ -638,7 +663,9 @@ function restore_backup_mysql() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' no banco de dados '${database_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} ${database_name}" < "$backup_file_path"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
+    docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} ${database_name}" <"$backup_file_path"
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}' no banco de dados '${database_name}'."
@@ -671,7 +698,7 @@ function backup_mysql() {
         fi
         break
     done
-    
+
     while true; do
         echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados MySQL: "
         read db_name
@@ -690,7 +717,7 @@ function backup_mysql() {
         if [ -z "$backup_file_path" ]; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${backup_file_path}' não existe."
             continue
-        fi        
+        fi
         if ! check_directory_exists "$(dirname "$backup_file_path")"; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
             continue
@@ -709,7 +736,9 @@ function backup_mysql() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MYSQL_ROOT_PASSWORD} ${db_name}" > "$backup_file_path"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
+    docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MYSQL_ROOT_PASSWORD} ${db_name}" >"$backup_file_path"
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
@@ -724,7 +753,7 @@ function backup_mysql() {
 # --->>> // MYSQL <<<---
 
 # --->>> APACHE2 <<<---
-function apache_static_site(){
+function apache_static_site() {
     local container_name
     local site_directory
 
@@ -738,14 +767,14 @@ function apache_static_site(){
         fi
     done
 
-    while true; do 
+    while true; do
         echo -ne " ${INPUT}↳${NC} Informe o caminho completo do diretório do site estático: "
         read site_directory
 
         if check_directory_exists "$site_directory"; then
             break
-        else 
-           echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${site_directory}' não existe. Tente novamente."
+        else
+            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${site_directory}' não existe. Tente novamente."
         fi
     done
 
@@ -754,7 +783,9 @@ function apache_static_site(){
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Todas as portas entre 8080 e 8099 estão ocupadas. Não é possível criar o container."
         return 1
     fi
-     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Criando e iniciando container Apache${NC} ${BLUE}<<<${NC}"
+    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Criando e iniciando container Apache${NC} ${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     docker run -d --name "$container_name" -p $suggested_port:80 -v "$site_directory":/usr/local/apache2/htdocs/ httpd:2.4
 
     if [ $? -eq 0 ]; then
@@ -767,7 +798,7 @@ function apache_static_site(){
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o container '${container_name}'."
         return 1
     fi
-} 
+}
 function reverse_proxy_apache() {
     local container_name
     local upstream_url
@@ -793,8 +824,7 @@ function reverse_proxy_apache() {
 
     mkdir -p configs
 
-    
-    cat > configs/httpd.conf <<EOF
+    cat >configs/httpd.conf <<EOF
 <VirtualHost *:80>
     ServerName localhost
     ProxyPreserveHost On
@@ -804,7 +834,7 @@ function reverse_proxy_apache() {
     CustomLog \${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
 EOF
-    cat > configs/Dockerfile-apache << EOF
+    cat >configs/Dockerfile-apache <<EOF
 FROM debian:latest
 MAINTAINER SeuNome "seuemail@example.com"
 ENV DEBIAN_FRONTEND noninteractive
@@ -823,6 +853,8 @@ CMD ["apachectl", "-D", "FOREGROUND"]
 EOF
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} <<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     docker build -t apache-reverse-proxy -f configs/Dockerfile-apache .
 
     if [ $? -ne 0 ]; then
@@ -852,12 +884,12 @@ function create_nginx_frontend_container() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Nginx para Frontend${NC} ${BLUE}:::...${NC}"
     while true; do
-        
+
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
-            break  
+            break
         fi
     done
 
@@ -881,13 +913,15 @@ function create_nginx_frontend_container() {
     mkdir -p configs
     cp -r "$frontend_dir" configs/frontend
 
-    cat > configs/Dockerfile-frontend <<EOF
+    cat >configs/Dockerfile-frontend <<EOF
 FROM nginx:latest
 COPY frontend /usr/share/nginx/html
 EXPOSE 80
 EOF
 
     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     docker build -t frontend-image -f configs/Dockerfile-frontend configs
 
     if [ $? -ne 0 ]; then
@@ -910,7 +944,7 @@ EOF
     fi
 }
 
-function reverse_proxy_nginx(){
+function reverse_proxy_nginx() {
     local container_name
     local upstream_url
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Nginx (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
@@ -934,7 +968,7 @@ function reverse_proxy_nginx(){
 
     mkdir -p configs
 
-    cat > configs/nginx.conf <<EOF
+    cat >configs/nginx.conf <<EOF
 events {}
 http {
     server {
@@ -949,12 +983,14 @@ http {
     }
 }
 EOF
-    cat > configs/Dockerfile-nginx << EOF
+    cat >configs/Dockerfile-nginx <<EOF
 FROM nginx:latest
 COPY configs/nginx.conf /etc/nginx/nginx.conf
 EOF
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD}Construindo imagem Docker${NC}${BLUE} <<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     docker build -t nginx-image -f configs/Dockerfile-nginx .
 
     if [ $? -ne 0 ]; then
@@ -963,7 +999,7 @@ EOF
     fi
 
     docker run -d --name $container_name -p $suggested_port:80 nginx-image
-    
+
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
         echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
@@ -986,16 +1022,16 @@ function create_vsftpd_container() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
     while true; do
-        
+
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
-            break  
+            break
         fi
     done
 
-     while true; do
+    while true; do
         echo -ne " ${INPUT}↳${NC} Informe o nome do usuário SFTP: "
         read sftp_user
 
@@ -1018,7 +1054,7 @@ function create_vsftpd_container() {
 
     mkdir -p configs
 
-    cat > configs/Dockerfile-vsftpd <<EOF
+    cat >configs/Dockerfile-vsftpd <<EOF
 FROM ubuntu:latest
 RUN apt-get update && apt-get install -y openssh-server
 RUN mkdir /var/run/sshd
@@ -1033,7 +1069,9 @@ EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
-    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}:::...${NC}"
+    echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE} <<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     docker build -t sftp-image -f configs/Dockerfile-vsftpd .
 
     if [ $? -ne 0 ]; then
@@ -1065,12 +1103,12 @@ function create_ssh_sftp_container() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
     while true; do
-        
+
         echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
-            break  
+            break
         fi
     done
 
@@ -1097,9 +1135,9 @@ function create_ssh_sftp_container() {
 
     mkdir -p configs
 
-    echo "$sftp_user:$sftp_password:1001" > configs/users.conf
+    echo "$sftp_user:$sftp_password:1001" >configs/users.conf
 
-    cat > configs/sshd_config <<EOF
+    cat >configs/sshd_config <<EOF
 Subsystem sftp internal-sftp
 Match User $sftp_user
     PasswordAuthentication yes
@@ -1108,7 +1146,7 @@ Match User $sftp_user
     AllowTcpForwarding no
 EOF
 
-    cat > configs/Dockerfile-ssh <<EOF
+    cat >configs/Dockerfile-ssh <<EOF
 FROM debian:latest
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server \
@@ -1128,6 +1166,8 @@ CMD ["/usr/sbin/sshd", "-D"]
 EOF
 
     echo -e "${NL}${BLUE} >>> ${NC}${BOLD}Construindo imagem Docker${NC} ${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     docker build -t sftp-image -f configs/Dockerfile-ssh .
 
     if [ $? -ne 0 ]; then
@@ -1136,8 +1176,8 @@ EOF
     fi
 
     docker run -d --name $container_name -p $suggested_port:22 \
-      -v $(pwd)/configs/users.conf:/etc/sftp-users.conf \
-      sftp-image
+        -v $(pwd)/configs/users.conf:/etc/sftp-users.conf \
+        sftp-image
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
@@ -1154,16 +1194,18 @@ EOF
 }
 # --->>> //OpenSSH <<<---
 # --->>> DOCKER <<<---
-function docker_install(){
+function docker_install() {
     echo ""
-    if command -v docker &> /dev/null; then
-        sleep 0.3 
+    if command -v docker &>/dev/null; then
+        sleep 0.3
         echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker já está instalado!"
         sleep 0.3
         return
     else
         echo -e "${NL}${MAGENTA} ...::: ${NC}${BOLD}Instalação do Docker${NC} ${MAGENTA}:::...${NC}"
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Atualizando Sistema ${NC}${BLUE}<<<${NC}"
+        echo -e "${BLUE}....................................................${NC}${NL}"
+
         apt update && apt upgrade -y
         if [ $? -ne 0 ]; then
             sleep 0.3
@@ -1172,6 +1214,8 @@ function docker_install(){
             return
         fi
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Instalando pacotes necessários ${NC}${BLUE}<<<${NC}"
+        echo -e "${BLUE}....................................................${NC}${NL}"
+
         apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
         if [ $? -ne 0 ]; then
             sleep 0.3
@@ -1180,6 +1224,8 @@ function docker_install(){
             return
         fi
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando chave GPG do repositório Docker ${NC}${BLUE}<<<${NC}"
+        echo -e "${BLUE}....................................................${NC}${NL}"
+
         curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
         if [ $? -ne 0 ]; then
             sleep 0.3
@@ -1188,10 +1234,14 @@ function docker_install(){
             return
         fi
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando repositório Docker ao sistema ${NC}${BLUE}<<<${NC}"
+        echo -e "${BLUE}....................................................${NC}${NL}"
+
         echo "deb [signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
         apt update
 
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Instalando Docker Engine ${NC}${BLUE}<<<${NC}"
+        echo -e "${BLUE}....................................................${NC}${NL}"
+
         apt install -y docker-ce docker-ce-cli containerd.io
         if [ $? -ne 0 ]; then
             sleep 0.3
@@ -1201,6 +1251,8 @@ function docker_install(){
         fi
 
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Adicionando usuário ao grupo Docker ${NC}${BLUE}<<<${NC}"
+        echo -e "${BLUE}....................................................${NC}${NL}"
+
         echo -ne " ${INPUT}↳${NC} Informe o nome do usuário que utilizará o Docker: "
         read -r usr
         usermod -aG docker $usr
@@ -1219,8 +1271,8 @@ function docker_install(){
         fi
     fi
 }
-function docker_uninstall(){
-    
+function docker_uninstall() {
+
     check_docker_installed
     if [ $? -ne 0 ]; then
         sleep 0.3
@@ -1229,6 +1281,8 @@ function docker_uninstall(){
         return
     fi
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Desinstalando Docker ${NC}${BLUE}<<<${NC}"
+    echo -e "${BLUE}....................................................${NC}${NL}"
+
     rm /usr/share/keyrings/docker-archive-keyring.gpg
     apt purge docker-ce docker-ce-cli containerd.io -y && apt autoremove -y
     apt clean
@@ -1240,8 +1294,8 @@ function docker_uninstall(){
 # --->>> //DOCKER <<<---
 
 # --->>> MENUS <<<---
-function apache_menu(){
-    
+function apache_menu() {
+
     echo -e "${NL}${BLUE}╔═════════════════════════════════════════╗"
     echo -e "║                 ${NC}${BOLD}APACHE ${NC}${BLUE}                 ║"
     echo -e "╠═════════════════════════════════════════╣"
@@ -1252,29 +1306,29 @@ function apache_menu(){
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r web_option
     case $web_option in
-        1)
-            sleep 0.3
-            apache_static_site
-            ;;
-        2)
-            sleep 0.3
-            reverse_proxy_apache
-            ;;   
-        0)
-            sleep 0.3
-            clear
-            web_server_menu
-            ;;
-        *)
-            sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-            sleep 0.3
-            apache_menu
-            ;;     
+    1)
+        sleep 0.3
+        apache_static_site
+        ;;
+    2)
+        sleep 0.3
+        reverse_proxy_apache
+        ;;
+    0)
+        sleep 0.3
+        clear
+        web_server_menu
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        apache_menu
+        ;;
     esac
 
 }
-function nginx_menu(){
+function nginx_menu() {
     echo -e "${NL}${BLUE}╔═════════════════════════════════════════╗"
     echo -e "║                 ${NC}${BOLD}NGINX  ${NC}${BLUE}                 ║"
     echo -e "╠═════════════════════════════════════════╣"
@@ -1285,29 +1339,29 @@ function nginx_menu(){
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r web_option
     case $web_option in
-        1)
-            sleep 0.3
-            create_nginx_frontend_container
-            ;;
-        2)
-            sleep 0.3
-            reverse_proxy_nginx
-            ;;   
-        0)
-            sleep 0.3
-            clear
-            web_server_menu
-            ;;
-        *)
-            sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-            sleep 0.3
-            nginx_menu
-            ;;     
+    1)
+        sleep 0.3
+        create_nginx_frontend_container
+        ;;
+    2)
+        sleep 0.3
+        reverse_proxy_nginx
+        ;;
+    0)
+        sleep 0.3
+        clear
+        web_server_menu
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        nginx_menu
+        ;;
     esac
 
 }
-function web_server_menu(){
+function web_server_menu() {
     check_docker_installed
     if [ $? -ne 0 ]; then
         sleep 0.3
@@ -1322,29 +1376,29 @@ function web_server_menu(){
     echo -e "╚═════════════════════════════╝${NC}"
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r server_option
-    case $server_option in 
-        1) 
-            sleep 0.3
-            apache_menu
-            ;;
-        2) 
-            sleep 0.3
-            nginx_menu
-            ;;
-        0) 
-            sleep 0.3
-            clear
-            main_menu
-            ;;
-        *)
-            sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-            sleep 0.3
-            web_server_menu
-            ;;     
+    case $server_option in
+    1)
+        sleep 0.3
+        apache_menu
+        ;;
+    2)
+        sleep 0.3
+        nginx_menu
+        ;;
+    0)
+        sleep 0.3
+        clear
+        main_menu
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        web_server_menu
+        ;;
     esac
 }
-function mariadb_menu(){
+function mariadb_menu() {
     echo -e "${NL}${BLUE}╔════════════════════════════════════════════╗"
     echo -e "║                  ${NC}${BOLD}MARIADB${NC}${BLUE}                   ║"
     echo -e "╠════════════════════════════════════════════╣"
@@ -1378,11 +1432,11 @@ function mariadb_menu(){
         echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
         sleep 0.3
         mariadb_menu
-        ;;  
-    
+        ;;
+
     esac
 }
-function mysql_menu(){
+function mysql_menu() {
     echo -e "${NL}${BLUE}╔════════════════════════════════════════════╗"
     echo -e "║                    ${NC}${BOLD}MYSQL${NC}${BLUE}                   ║"
     echo -e "╠════════════════════════════════════════════╣"
@@ -1419,7 +1473,7 @@ function mysql_menu(){
         ;;
     esac
 }
-function postgre_menu(){
+function postgre_menu() {
     echo -e "${NL}${BLUE}╔════════════════════════════════════════════╗"
     echo -e "║              ${NC}${BOLD}PostgreSQL${NC}${BLUE}                    ║"
     echo -e "╠════════════════════════════════════════════╣"
@@ -1431,32 +1485,32 @@ function postgre_menu(){
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r postgre_option
     case $postgre_option in
-        1)
-            sleep 0.3
-            create_postgresql_container
-            ;;
-        2)
-            sleep 0.3
-            restore_backup_postgresql
-            ;;
-        3)
-            sleep 0.3
-            backup_postgresql
-            ;;
-        0)
-            sleep 0.3
-            clear
-            database_menu
-            ;;
-        *)
-            sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-            sleep 0.3
-            postgre_menu
-            ;;
+    1)
+        sleep 0.3
+        create_postgresql_container
+        ;;
+    2)
+        sleep 0.3
+        restore_backup_postgresql
+        ;;
+    3)
+        sleep 0.3
+        backup_postgresql
+        ;;
+    0)
+        sleep 0.3
+        clear
+        database_menu
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        postgre_menu
+        ;;
     esac
 }
-function sfpt_menu(){
+function sfpt_menu() {
     check_docker_installed
     if [ $? -ne 0 ]; then
         sleep 0.3
@@ -1473,28 +1527,28 @@ function sfpt_menu(){
     read -r server_option
 
     case $server_option in
-        1)
-            sleep 0.3
-            create_ssh_sftp_container
-            ;;
-        2)
-            sleep 0.3
-            create_vsftpd_container
-            ;;
-       
-        0)
-            sleep 0.3
-            main_menu
-            ;;
-        *)
-            sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-            sleep 0.3
-            sftp_menu
-            ;;
+    1)
+        sleep 0.3
+        create_ssh_sftp_container
+        ;;
+    2)
+        sleep 0.3
+        create_vsftpd_container
+        ;;
+
+    0)
+        sleep 0.3
+        main_menu
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        sftp_menu
+        ;;
     esac
 }
-function database_menu(){
+function database_menu() {
     check_docker_installed
     if [ $? -ne 0 ]; then
         sleep 0.3
@@ -1511,32 +1565,32 @@ function database_menu(){
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r database_option
     case $database_option in
-        1)
-            sleep 0.3
-            mysql_menu
-            ;;
-        2)
-            sleep 0.3
-            mariadb_menu
-            ;;
-        3)
-            sleep 0.3
-            postgre_menu
-            ;;
-        0)
-            sleep 0.3
-            clear
-            main_menu
-            ;;
-        *)
-            sleep 0.3
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-            sleep 0.3
-            database_menu
-            ;;
+    1)
+        sleep 0.3
+        mysql_menu
+        ;;
+    2)
+        sleep 0.3
+        mariadb_menu
+        ;;
+    3)
+        sleep 0.3
+        postgre_menu
+        ;;
+    0)
+        sleep 0.3
+        clear
+        main_menu
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        database_menu
+        ;;
     esac
 }
-function docker_menu(){
+function docker_menu() {
     echo -e "${NL}${BLUE}╔══════════════════════════════╗"
     echo -e "║           ${NC}${BOLD}DOCKER${NC}${BLUE}             ║"
     echo -e "╠══════════════════════════════╣"
@@ -1547,16 +1601,72 @@ function docker_menu(){
     echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
     read -r docker_option
     case $docker_option in
-        1)  sleep 0.3
-            docker_install
+    1)
+        sleep 0.3
+        docker_install
+        ;;
+    2)
+        sleep 0.3
+        docker_uninstall
+        ;;
+    0)
+        sleep 0.3
+        return
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
+        sleep 0.3
+        main_menu
+        ;;
+    esac
+}
+function main_menu() {
+    while true; do
+        echo -e "${NL}${BLUE}╔══════════════════════════════╗"
+        echo -e "║        ${NC}${BOLD}MENU PRINCIPAL        ${BLUE}║"
+        echo -e "╠══════════════════════════════╣"
+        echo -e "║${NC} [${INPUT}1${NC}] - Docker                 ${BLUE}║"
+        echo -e "║${NC} [${INPUT}2${NC}] - Servidores Web         ${BLUE}║"
+        echo -e "║${NC} [${INPUT}3${NC}] - Servidores SFTP        ${BLUE}║"
+        echo -e "║${NC} [${INPUT}4${NC}] - Bancos de Dados        ${BLUE}║"
+        echo -e "║${NC} [${INPUT}0${NC}] - Sair                   ${BLUE}║"
+        echo -e "╚══════════════════════════════╝${NC}"
+        echo -ne "${INPUT}↳${NC} Selecione uma opção: "
+        read -r menu_option
+
+        case $menu_option in
+
+        1)
+            sleep 0.3
+            clear
+            docker_menu
             ;;
         2)
             sleep 0.3
-            docker_uninstall
+            clear
+            web_server_menu
             ;;
-        0)
+        3)
             sleep 0.3
-            return
+            clear
+            sfpt_menu
+            ;;
+        4)
+            sleep 0.3
+            clear
+            database_menu
+            ;;
+        5)
+            sleep 0.3
+            clear
+            create_samba_container
+            ;;
+
+        0)
+            echo -ne "${BLUE}Encerrando ...${NL}"
+            sleep 0.3
+            exit 0
             ;;
         *)
             sleep 0.3
@@ -1564,59 +1674,14 @@ function docker_menu(){
             sleep 0.3
             main_menu
             ;;
-    esac
-}
-function main_menu(){
-    while true; do
-        echo -e "${NL}${BLUE}╔══════════════════════════════╗"
-        echo -e "║        ${NC}${BOLD}MENU PRINCIPAL        ${BLUE}║"
-        echo -e "╠══════════════════════════════╣" 
-        echo -e "║${NC} [${INPUT}1${NC}] - Docker                 ${BLUE}║"
-        echo -e "║${NC} [${INPUT}2${NC}] - Servidores Web         ${BLUE}║"
-        echo -e "║${NC} [${INPUT}3${NC}] - Servidores SFTP        ${BLUE}║"
-        echo -e "║${NC} [${INPUT}4${NC}] - Bancos de Dados        ${BLUE}║"
-        echo -e "║${NC} [${INPUT}0${NC}] - Sair                   ${BLUE}║"
-        echo -e "╚══════════════════════════════╝${NC}"      
-        echo -ne "${INPUT}↳${NC} Selecione uma opção: "  
-        read -r menu_option
-
-        case $menu_option in
-
-            1)  sleep 0.3
-                clear
-                docker_menu
-                ;;
-            2)  sleep 0.3
-                clear
-                web_server_menu
-                ;;
-            3)  sleep 0.3
-                clear
-                sfpt_menu
-                ;;
-            4)  sleep 0.3
-                clear
-                database_menu
-                ;;
-            5) sleep 0.3
-                clear
-                create_samba_container
-                ;;
-
-            0)  echo -ne "${BLUE}Encerrando ...${NL}"
-                sleep 0.3
-                exit 0
-                ;;
-            *)  sleep 0.3
-                echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
-                sleep 0.3
-                main_menu
-                ;;
         esac
     done
 }
 if [ "$(id -u)" -ne 0 ]; then
-    echo -e "${NL}${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Por favor execute esse script como root!${NL}"
+    echo -e "${NL}╔═══════════════${WARNING}${BOLD}⚠  AVISO ⚠${NC}  ════════════════╗"
+    echo -e "║  Por favor execute esse script como root! ║ "
+    echo -e "╚═══════════════════════════════════════════╝${NL}"
+
     exit 1
 fi
 
@@ -1636,5 +1701,5 @@ echo -e "𒁷  Autor:       Cristian Alves Silva"
 echo -e "𒁷  Orientador:  Prof. Dr. Claiton Luiz Soares"
 echo -e "𒁷  Curso:       Tecnologia em Análise e Desenvolvimento de Sistemas"
 echo -e "𒁷  Título:      Assistente de implantação de servidores em Docker"
-echo -e "" 
+echo -e ""
 main_menu
