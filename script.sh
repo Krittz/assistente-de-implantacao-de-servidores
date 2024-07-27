@@ -15,11 +15,11 @@ BLINK='\033[5m'
 # --->>> FUNÇÕES USUAIS <<<---
 function check_docker_installed() {
     if ! command -v docker &>/dev/null; then
-        echo -e "${NL}╔═════════════════${WARNING}${BOLD}⚠  AVISO ⚠${NC} ═══════════════════╗"
-        echo -e "║  Docker não está instalado.                   ║ "
-        echo -e "║  Por favor, instale o Docker para prosseguir. ║ "
-        echo -e "╚═══════════════════════════════════════════════╝${NL}"
-      
+        echo -e "${NL}...................${WARNING}${BOLD}⚠  AVISO ⚠${NC} ..................."
+        echo -e ":  Docker não está instalado.                   : "
+        echo -e ":  Por favor, instale o Docker para prosseguir. : "
+        echo -e ":...............................................:${NL}"
+
         return 1
     fi
     return 0
@@ -1678,10 +1678,9 @@ function main_menu() {
     done
 }
 if [ "$(id -u)" -ne 0 ]; then
-    echo -e "${NL}╔═══════════════${WARNING}${BOLD}⚠  AVISO ⚠${NC}  ════════════════╗"
-    echo -e "║  Por favor execute esse script como root! ║ "
-    echo -e "╚═══════════════════════════════════════════╝${NL}"
-
+    echo -e "${NL}..................${WARNING}${BOLD}⚠  AVISO ⚠${NC} ................"
+    echo -e ":  Por favor execute esse script como root! : "
+    echo -e ":...........................................:${NL}"
     exit 1
 fi
 
