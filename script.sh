@@ -34,10 +34,15 @@ function check_container_name() {
         return 1
     fi
     if [ ! -z "$(docker ps -a --filter name=^/${container_name}$ --format '{{.Names}}')" ]; then
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome '${container_name}' indisponível! Tente novamente. "
+
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Nome [${container_name}] indisponível. Tente novamente"
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
         return 1
     else
-        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Nome do container '${container_name}' está disponível."
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Nome do container '${container_name}' está disponível."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         return 0
     fi
 }
@@ -92,17 +97,22 @@ function create_postgresql_container() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando PostgreSQL${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do novo container: "
         read container_name
+
         if check_container_name "$container_name"; then
             break
         fi
     done
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do usuário do banco de dados: "
         read db_user
 
-        echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe a senha do usuário do banco de dados: "
         read -s db_password
         echo
 
@@ -147,11 +157,13 @@ EOF
     docker run -d --name $container_name -p $suggested_port:5432 postgresql-image
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Banco: ${BOLD}PostgreSQL${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Banco: ${BOLD}PostgreSQL${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
     else
@@ -170,72 +182,101 @@ function restore_backup_postgresql() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup PostgreSQL${NC}${BLUE} :::...${NC}"
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do container PostgreSQL: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do container PostgreSQL: "
         read container_name
+
         if [ -z "${container_name}" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do container não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
             continue
         fi
 
         if ! check_container_exists "${container_name}"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O container '${container_name}' não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados PostgreSQL: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do banco de dados: "
         read db_name
 
         if [ -z "$db_name" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do banco de dados não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
+
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o caminho do arquivo de backup: "
         read backup_file_path
 
         if [ ! -f "$backup_file_path" ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
     done
 
     if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..."
+
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O container [${container_name}] não está em execução."
+        echo -e "  Iniciando container..."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
         docker start "$container_name"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao iniciar o container [${container_name}]"
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             return 1
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando se o banco de dados '${db_name}' existe ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}Verificando se o banco de dados [${db_name}] existe"
+    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     if ! docker exec "$container_name" psql -U postgres -lqt | cut -d \| -f 1 | grep -qw "$db_name"; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${db_name}' não existe. Criando banco de dados..."
+
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O banco de dados [${db_name}] não existe."
+        echo -e "  Criando banco de dados."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
+
         docker exec "$container_name" psql -U postgres -c "CREATE DATABASE ${db_name};"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${db_name}'."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao criar o banco [${db_name}]"
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             return 1
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}Restaurando backup do banco de dados [${db_name}]"
+    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     cat "$backup_file_path" | docker exec -i "$container_name" sh -c "exec psql -U postgres -d ${db_name}"
 
     if [ $? -eq 0 ]; then
         echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' restaurado com sucesso."
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup do banco de dados '${db_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao restaurar o backup [${db_name}]"
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -250,7 +291,8 @@ function backup_postgresql() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Backup PostgreSQL${NC}${BLUE} :::...${NC}"
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do container PostgreSQL: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do container PostgreSQL: "
         read container_name
         if [ -z "${container_name}" ]; then
             echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
@@ -290,16 +332,23 @@ function backup_postgresql() {
     done
 
     if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..."
+
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O container [${container_name}] não está em execução."
+        echo -e "  Iniciando container..."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
+
         docker start "$container_name"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao iniciar o container [${container_name}]"
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             return 1
         fi
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     docker exec "$container_name" sh -c "exec pg_dump -U postgres ${db_name}" >"$backup_file_path"
 
@@ -321,17 +370,21 @@ function create_mariadb_container() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do novo container: "
         read container_name
         if check_container_name "$container_name"; then
             break
         fi
     done
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do usuário do banco de dados: "
         read db_user
 
-        echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe a senha do usuário do banco de dados: "
         read -s db_password
         echo
 
@@ -380,11 +433,13 @@ EOF
     docker run -d --name $container_name -p $suggested_port:3306 mariadb-image
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Banco: ${BOLD}MariaDB${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Banco: ${BOLD}MariaDB${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
     else
@@ -430,28 +485,40 @@ function restore_backup_mariadb() {
         read backup_file_path
 
         if [ ! -f "$backup_file_path" ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
     done
 
     if ! check_container_running "${container_name}"; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando o container..."
+
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O container [${container_name}] não está em execução."
+        echo -e "  Iniciando container..."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
+
         docker start "$container_name"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao iniciar o container [${container_name}]"
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             return 1
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Verificando a existência do banco de dados '${database_name}' no container '${container_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}Verificando a existência do banco de dados '${database_name}' no container '${container_name}'"
+    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     db_exists=$(docker exec "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
     if [ -z "$db_exists" ]; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${database_name}' não existe. Criando o banco de dados..."
-        echo -e "${BLUE}....................................................${NC}${NL}"
+
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O banco de dados [${database_name}] não existe."
+        echo -e "  Criando o banco de dados..."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
 
         docker exec "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
         if [ $? -ne 0 ]; then
@@ -461,7 +528,7 @@ function restore_backup_mariadb() {
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' no banco de dados '${database_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     docker exec -i "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} ${database_name}" <"$backup_file_path"
 
@@ -520,16 +587,24 @@ function backup_mariadb() {
     done
 
     if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..."
+
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O container [${container_name}] não está em execução."
+        echo -e "  Iniciando container..."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
+
         docker start "$container_name"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao iniciar o container [${container_name}]"
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             return 1
         fi
     fi
 
     echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}....................................................${NC}${NL}"
+    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     docker exec "$container_name" sh -c "exec mariadb-dump -u root -p\${MARIADB_ROOT_PASSWORD} ${db_name}" >"$backup_file_path"
 
@@ -553,7 +628,8 @@ function create_mysql_container() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MySQL${NC} ${BLUE}:::...${NC}"
     while true; do
 
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -561,10 +637,12 @@ function create_mysql_container() {
         fi
     done
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário do banco de dados: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome do usuário do banco de dados: "
         read db_user
 
-        echo -ne " ${INPUT}↳${NC} Informe a senha do usuário do banco de dados: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe a senha do usuário do banco de dados: "
         read -s db_password
         echo
 
@@ -612,11 +690,13 @@ EOF
     docker run -d --name $container_name -p $suggested_port:3306 mysql-image
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Banco: ${BOLD}MySQL${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Banco: ${BOLD}MySQL${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
     else
@@ -660,7 +740,9 @@ function restore_backup_mysql() {
         echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
         read backup_file_path
         if [ ! -f "$backup_file_path" ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
 
@@ -672,10 +754,17 @@ function restore_backup_mysql() {
     done
 
     if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando o container..."
+
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O container [${container_name}] não está em execução."
+        echo -e "  Iniciando container..."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
+
         docker start "$container_name"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao iniciar o container [${container_name}]"
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             return 1
         fi
     fi
@@ -685,7 +774,12 @@ function restore_backup_mysql() {
 
     db_exists=$(docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
     if [ -z "$db_exists" ]; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O banco de dados '${database_name}' não existe. Criando o banco de dados..."
+
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O banco de dados [${database_name}] não existe."
+        echo -e "  Criando o banco de dados..."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
+
         docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
         if [ $? -ne 0 ]; then
             echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${database_name}'."
@@ -757,10 +851,17 @@ function backup_mysql() {
     done
 
     if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-        echo -e "${INFO}${BOLD}ℹ INFO ℹ${NC}: O container '${container_name}' não está em execução. Iniciando container..."
+        
+        echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O container [${container_name}] não está em execução."
+        echo -e "  Iniciando container..."
+        echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
+        
         docker start "$container_name"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao iniciar o container '${container_name}'."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao iniciar o container [${container_name}]"
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             return 1
         fi
     fi
@@ -789,7 +890,9 @@ function apache_static_site() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Container Apache${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o nome novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -798,7 +901,10 @@ function apache_static_site() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do diretório do site estático: "
+        echo -ne " ${INPUT}↳${NC} Informe o  "
+
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o caminho completo do diretório da aplicação: "
         read site_directory
 
         if check_directory_exists "$site_directory"; then
@@ -822,9 +928,12 @@ function apache_static_site() {
     docker run -d --name "$container_name" -p $suggested_port:80 -v "$site_directory":/usr/local/apache2/htdocs/ httpd:2.4
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Servidor: ${BOLD}Apache${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
     else
@@ -889,7 +998,6 @@ VOLUME /etc/apache2/sites-available
 COPY configs/httpd.conf /etc/apache2/sites-available/000-default.conf
 CMD ["apachectl", "-D", "FOREGROUND"]
 EOF
-
     echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
     echo -e "-------------------------------------${NC}${NL}"
 
@@ -905,10 +1013,12 @@ EOF
     docker run -d --name $container_name -p $suggested_port:80 apache-reverse-proxy
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Proxy reverso para: ${BOLD}$upstream_url${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Proxy para: ${BOLD}$upstream_url${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
     else
@@ -936,7 +1046,8 @@ function create_nginx_frontend_container() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do diretório do frontend: "
+        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -ne " ${INPUT}➤${NC} Informe o caminho completo do diretório da aplicação: "
         read frontend_dir
 
         if check_directory_exists "$frontend_dir"; then
@@ -979,10 +1090,12 @@ EOF
     docker run -d --name $container_name -p $suggested_port:80 frontend-image
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Diretório Frontend: ${BOLD}$frontend_dir${NC}"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Servidor: ${BOLD}NGINX${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
     else
@@ -1055,10 +1168,13 @@ EOF
     docker run -d --name $container_name -p $suggested_port:80 nginx-image
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Proxy reverso para: ${BOLD}$upstream_url${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Proxy para: ${BOLD}$upstream_url${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
         sleep 0.3
         main_menu
     else
@@ -1146,11 +1262,14 @@ EOF
     docker run -d --name $container_name -p $suggested_port:22 sftp-image
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}SFTP: ${BOLD}OpenSSH${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$sftp_user${NC}"
+
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}SFTP: ${BOLD}VSFTPD${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$sftp_user${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
     else
@@ -1253,11 +1372,13 @@ EOF
         sftp-image
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Container '${container_name}' criado e executando na porta $suggested_port."
-        echo -e " ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}SFTP via SSH: ${BOLD}OpenSSH${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-        echo -e " ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$sftp_user${NC}"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Container '${container_name}' criado e executando na porta $suggested_port."
+        echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}SFTP: ${BOLD}OpenSSH${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$sftp_user${NC}"
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
     else
@@ -1279,7 +1400,7 @@ function docker_install() {
     else
         echo -e "${NL}${MAGENTA} ...::: ${NC}${BOLD}Instalação do Docker${NC} ${MAGENTA}:::...${NC}"
         echo -e "${NL}${BLUE} >>>${NC}${BOLD} Atualizando Sistema ${NC}${BLUE}<<<${NC}"
-        echo -e "${BLUE}....................................................${NC}${NL}"
+        echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
         apt update && apt upgrade -y
         if [ $? -ne 0 ]; then
@@ -1797,4 +1918,4 @@ echo -e "𒁷  Curso:       Tecnologia em Análise e Desenvolvimento de Sistemas
 echo -e "𒁷  Título:      Assistente de implantação de servidores em Docker"
 echo -e ""
 
-main_menu
+#main_menu
