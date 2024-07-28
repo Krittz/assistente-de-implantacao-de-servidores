@@ -863,7 +863,7 @@ function backup_mysql() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criar Backup${NC}${BLUE} :::..."
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do container MySQL: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container MySQL: "
         read container_name
         if [ -z "${container_name}" ]; then
             echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
@@ -878,7 +878,7 @@ function backup_mysql() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados MySQL: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do banco de dados MySQL: "
         read db_name
 
         if [ -z "$db_name" ]; then
@@ -889,7 +889,7 @@ function backup_mysql() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup (incluir o nome do arquivo): "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o caminho completo para salvar o backup (incluir o nome do arquivo): "
         read backup_file_path
 
         if [ -z "$backup_file_path" ]; then
@@ -945,8 +945,7 @@ function apache_static_site() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Container Apache${NC} ${BLUE}:::...${NC}"
     while true; do
 
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -955,16 +954,16 @@ function apache_static_site() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o  "
 
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o caminho completo do diretório da aplicação: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o caminho completo do diretório da aplicação: "
         read site_directory
 
         if check_directory_exists "$site_directory"; then
             break
         else
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${site_directory}' não existe. Tente novamente."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Diretório [${site_directory}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         fi
     done
 
@@ -1003,7 +1002,7 @@ function reverse_proxy_apache() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Apache (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -1011,7 +1010,7 @@ function reverse_proxy_apache() {
         fi
     done
 
-    echo -ne " ${INPUT}↳${NC} Informe a URL do upstream da API (ex: http://endereco-da-api:porta): "
+    echo -ne " ${INPUT}➤➤➤${NC} Informe a URL do upstream da API (ex: http://endereco-da-api:porta): "
     read upstream_url
 
     local suggested_port
@@ -1091,7 +1090,7 @@ function create_nginx_frontend_container() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando Nginx para Frontend${NC} ${BLUE}:::...${NC}"
     while true; do
 
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -1100,14 +1099,16 @@ function create_nginx_frontend_container() {
     done
 
     while true; do
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o caminho completo do diretório da aplicação: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o caminho completo do diretório da aplicação: "
         read frontend_dir
 
         if check_directory_exists "$frontend_dir"; then
             break
         else
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Diretório '${frontend_dir}' não existe. Tente novamente."
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Diretório [${frontend_dir}] não existe."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
         fi
     done
 
@@ -1165,7 +1166,7 @@ function reverse_proxy_nginx() {
     local upstream_url
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando container Nginx (Proxy Reverso)${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -1173,7 +1174,7 @@ function reverse_proxy_nginx() {
         fi
     done
 
-    echo -ne " ${INPUT}↳${NC} Informe a URL do upstream da API (ex: http://endereco-da-api:porta): "
+    echo -ne " ${INPUT}➤➤➤${NC} Informe a URL do upstream da API (ex: http://endereco-da-api:porta): "
     read upstream_url
 
     local suggested_port
@@ -1249,7 +1250,7 @@ function create_vsftpd_container() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
     while true; do
 
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -1258,10 +1259,10 @@ function create_vsftpd_container() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário SFTP: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do usuário SFTP: "
         read sftp_user
 
-        echo -ne " ${INPUT}↳${NC} Informe a senha do usuário SFTP: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe a senha do usuário SFTP: "
         read -s sftp_password
         echo
 
@@ -1343,7 +1344,7 @@ function create_ssh_sftp_container() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando SFTP${NC} ${BLUE}:::...${NC}"
     while true; do
 
-        echo -ne " ${INPUT}↳${NC} Informe o nome do novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -1352,10 +1353,10 @@ function create_ssh_sftp_container() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário SFTP: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do usuário SFTP: "
         read sftp_user
 
-        echo -ne " ${INPUT}↳${NC} Informe a senha do usuário SFTP: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe a senha do usuário SFTP: "
         read -s sftp_password
         echo
 
@@ -1579,7 +1580,7 @@ function apache_menu() {
     echo -e "║${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}      ║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}      ║"
     echo -e "╚═════════════════════════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r web_option
     case $web_option in
     1)
@@ -1614,7 +1615,7 @@ function nginx_menu() {
     echo -e "║${NC} [${INPUT}2${NC}] - Proxy reverso para APIs     ${BLUE}      ║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar                      ${BLUE}      ║"
     echo -e "╚═════════════════════════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r web_option
     case $web_option in
     1)
@@ -1654,7 +1655,7 @@ function web_server_menu() {
     echo -e "║${NC} [${INPUT}2${NC}] - Nginx                 ${BLUE}║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar                ${BLUE}║"
     echo -e "╚═════════════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r server_option
     case $server_option in
     1)
@@ -1689,7 +1690,7 @@ function mariadb_menu() {
     echo -e "║${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}║"
     echo -e "╚════════════════════════════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r mariadb_option
     case $mariadb_option in
     1)
@@ -1729,7 +1730,7 @@ function mysql_menu() {
     echo -e "║${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}║"
     echo -e "╚════════════════════════════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r mysql_option
     case $mysql_option in
     1)
@@ -1768,7 +1769,7 @@ function postgre_menu() {
     echo -e "║${NC} [${INPUT}3${NC}] - Realizar backup de um banco de dados ${BLUE}║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar                               ${BLUE}║"
     echo -e "╚════════════════════════════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r postgre_option
     case $postgre_option in
     1)
@@ -1811,7 +1812,7 @@ function sfpt_menu() {
     echo -e "║${NC} [${INPUT}2${NC}] - vsftpd          ${BLUE}║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar          ${BLUE}║"
     echo -e "╚═══════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r server_option
 
     case $server_option in
@@ -1852,7 +1853,7 @@ function database_menu() {
     echo -e "║${NC} [${INPUT}3${NC}] - PostgreSQL      ${BLUE}║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar          ${BLUE}║"
     echo -e "╚═══════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r database_option
     case $database_option in
     1)
@@ -1890,7 +1891,7 @@ function docker_menu() {
     echo -e "║${NC} [${INPUT}2${NC}] - Desinstalar          ${BLUE}  ║"
     echo -e "║${NC} [${INPUT}0${NC}] - Voltar               ${BLUE}  ║"
     echo -e "╚══════════════════════════════╝${NC}"
-    echo -ne " ${INPUT}↳${NC} Selecione uma opção: "
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
     read -r docker_option
     case $docker_option in
     1)
@@ -1926,7 +1927,7 @@ function main_menu() {
         echo -e "║${NC} [${INPUT}4${NC}] - Bancos de Dados        ${BLUE}║"
         echo -e "║${NC} [${INPUT}0${NC}] - Sair                   ${BLUE}║"
         echo -e "╚══════════════════════════════╝${NC}"
-        echo -ne "${INPUT}↳${NC} Selecione uma opção: "
+        echo -ne "${INPUT}➤➤➤${NC} Selecione uma opção: "
         read -r menu_option
 
         case $menu_option in
