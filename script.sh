@@ -98,8 +98,7 @@ function create_postgresql_container() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando PostgreSQL${NC} ${BLUE}:::...${NC}"
     while true; do
 
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -107,12 +106,10 @@ function create_postgresql_container() {
         fi
     done
     while true; do
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do usuário do banco de dados: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do usuário do banco de dados: "
         read db_user
 
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe a senha do usuário do banco de dados: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe a senha do usuário do banco de dados: "
         read -s db_password
         echo
 
@@ -182,8 +179,8 @@ function restore_backup_postgresql() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup PostgreSQL${NC}${BLUE} :::...${NC}"
 
     while true; do
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do container PostgreSQL: "
+
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container PostgreSQL: "
         read container_name
 
         if [ -z "${container_name}" ]; then
@@ -203,8 +200,8 @@ function restore_backup_postgresql() {
     done
 
     while true; do
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do banco de dados: "
+
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do banco de dados: "
         read db_name
 
         if [ -z "$db_name" ]; then
@@ -217,9 +214,7 @@ function restore_backup_postgresql() {
     done
 
     while true; do
-
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o caminho do arquivo de backup: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome caminho do arquivo de bakcup(incluindo o nome do arquivo): "
         read backup_file_path
 
         if [ ! -f "$backup_file_path" ]; then
@@ -272,7 +267,11 @@ function restore_backup_postgresql() {
     cat "$backup_file_path" | docker exec -i "$container_name" sh -c "exec psql -U postgres -d ${db_name}"
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' restaurado com sucesso."
+
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Backup do banco [${db_name}] restaurado com sucesso."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
     else
         echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
         echo -e "  Falha ao restaurar o backup [${db_name}]"
@@ -291,41 +290,55 @@ function backup_postgresql() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Backup PostgreSQL${NC}${BLUE} :::...${NC}"
 
     while true; do
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do container PostgreSQL: "
+
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container PostgreSQL: "
         read container_name
+
         if [ -z "${container_name}" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do container não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
 
         if ! check_container_exists "${container_name}"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O container [${container_name}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
         break
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${BOLD} Informe o nome do banco de dados PostgreSQL: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do banco de dados PostgreSQL: "
         read db_name
 
         if [ -z "$db_name" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do banco de dados não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
         break
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup (incluir nome do arquivo):"
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o caminho completo para salvar o backup (incluir nome do arquivo):"
         read backup_file_path
 
         local dir_path
         dir_path=$(dirname "$backup_file_path")
 
         if [ ! -d "$dir_path" ]; then
-            echo -e"${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${dir_path}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O diretório [${dir_path}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
@@ -353,9 +366,15 @@ function backup_postgresql() {
     docker exec "$container_name" sh -c "exec pg_dump -U postgres ${db_name}" >"$backup_file_path"
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
+
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Backup do banco de dados[${db_name}] criado com sucesso."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${db_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar backup do banco de dados [${db_name}]"
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
     sleep 0.3
@@ -851,12 +870,12 @@ function backup_mysql() {
     done
 
     if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-        
+
         echo -e "${NL}${INFO}┍━━ ℹ  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
         echo -e "  O container [${container_name}] não está em execução."
         echo -e "  Iniciando container..."
         echo -e "${INFO}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ℹ  ━━━━━━━┙${NC}${NL}"
-        
+
         docker start "$container_name"
         if [ $? -ne 0 ]; then
             echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
