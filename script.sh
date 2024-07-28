@@ -214,12 +214,12 @@ function restore_backup_postgresql() {
     done
 
     while true; do
-        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome caminho do arquivo de bakcup(incluindo o nome do arquivo): "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome caminho do arquivo de backup(incluindo o nome do arquivo): "
         read backup_file_path
 
         if [ ! -f "$backup_file_path" ]; then
             echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-            echo -e "  O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "  O arquivo de backup [${backup_file_path}] não existe."
             echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
@@ -242,7 +242,7 @@ function restore_backup_postgresql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE}${BOLD}Verificando se o banco de dados [${db_name}] existe"
+    echo -e "${NL}${BLUE}${BOLD}VERIFICANDO SE O BANCO DE DADOS [${db_name}] EXISTE"
     echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     if ! docker exec "$container_name" psql -U postgres -lqt | cut -d \| -f 1 | grep -qw "$db_name"; then
@@ -261,7 +261,7 @@ function restore_backup_postgresql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE}${BOLD}Restaurando backup do banco de dados [${db_name}]"
+    echo -e "${NL}${BLUE}${BOLD}RESTAURANDO BACKUP DO BANCO DE DADOS [${db_name}]"
     echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     cat "$backup_file_path" | docker exec -i "$container_name" sh -c "exec psql -U postgres -d ${db_name}"
@@ -360,8 +360,8 @@ function backup_postgresql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
+    echo -e "${NL}${BLUE}CRIANDO BACKUP DO BANCO DE DADOS [${db_name}]"
+    echo -e "----------------------------------------------------${NC}${NL}"
 
     docker exec "$container_name" sh -c "exec pg_dump -U postgres ${db_name}" >"$backup_file_path"
 
@@ -535,7 +535,7 @@ function restore_backup_mariadb() {
         fi
     fi
 
-    echo -e "${NL}${BLUE}${BOLD}Verificando a existência do banco de dados '${database_name}' no container '${container_name}'"
+    echo -e "${NL}${BLUE}${BOLD}VERIFICANDO A EXISTÊNCIA DO BANCO DE DADOS '${database_name}' NO CONTAINER '${container_name}'"
     echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     db_exists=$(docker exec "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
@@ -593,7 +593,9 @@ function backup_mariadb() {
         fi
 
         if ! check_container_exists "${container_name}"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Container [${container_name}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
@@ -645,7 +647,7 @@ function backup_mariadb() {
         fi
     fi
 
-    echo -e "${NL}${BLUE}${BOLD} Criando backup do banco de dados '${db_name}'"
+    echo -e "${NL}${BLUE}${BOLD} CRIANDO BACKUP DO BANCO DE DADOS [${db_name}]"
     echo -e "----------------------------------------------------${NC}${NL}"
 
     docker exec "$container_name" sh -c "exec mariadb-dump -u root -p\${MARIADB_ROOT_PASSWORD} ${db_name}" >"$backup_file_path"
@@ -654,9 +656,7 @@ function backup_mariadb() {
         echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
         echo -e "  Backup [${db_name}] criado com sucesso."
         echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
-
     else
-
         echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
         echo -e "  Falha ao criar backup do banco de dados [${db_name}]"
         echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
