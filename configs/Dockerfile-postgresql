@@ -1,5 +1,0 @@
-FROM postgres:latest
-ENV POSTGRES_PASSWORD=calangos
-ENV POSTGRES_USENAME=cristian
-EXPOSE 5433
-

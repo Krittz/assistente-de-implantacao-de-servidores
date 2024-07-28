@@ -24,6 +24,38 @@ function check_docker_installed() {
     fi
     return 0
 }
+function check_and_install_ufw() {
+    if ! command -v ufw &>/dev/null; then
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  O UFW não está instalado no seu sistema."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
+        echo -ne " ${INPUT}➤➤➤${NC} Deseja instalar o UFW? (s/n) "
+        read -r install_choice
+
+        if [[ "$install_choice" == "s" || "$install_choice" == "S" ]]; then
+            echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Instalando o 'ufw'...${NC}${BLUE} :::...${NC}"
+            sudo apt update
+            sudo apt install -y ufw
+            if [ $? -eq 0 ]; then
+                echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+                echo -e "  'ufw' foi instalado com sucesso."
+                echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
+            else
+                echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+                echo -e "  Falha na instalação do 'ufw'."
+                echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━┙${NC}${NL}"
+                return 1
+            fi
+        else
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O 'ufw' não será instalado. As funcionalidades de firewall não estarão disponíveis."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✨  ━━━━━━━┙${NC}${NL}"
+            return 1
+        fi
+    fi
+}
 function check_container_name() {
     local container_name=$1
     if [ -z "$container_name" ]; then
@@ -87,6 +119,12 @@ function check_directory_exists() {
         return 1
     fi
 }
+function is_valid_ip() {
+    local ip=$1
+    local valid_ip_regex='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+    [[ $ip =~ $valid_ip_regex ]]
+}
+
 # --->>> //FUNÇÕES USUAIS <<<---
 
 # --->>> POSTGRESQL <<<---
@@ -136,7 +174,6 @@ function create_postgresql_container() {
 FROM postgres:latest
 ENV POSTGRES_PASSWORD=$db_password
 EXPOSE $suggested_port
-
 EOF
 
     echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
@@ -1472,6 +1509,208 @@ EOF
     fi
 }
 # --->>> //OpenSSH <<<---
+
+# --->>> Firewall <<<---
+function firewall_ip() {
+    local container_name
+    local container_port
+    local ip_address
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Configurar Firewall${NC} ${BLUE}:::...${NC}${NL}"
+
+    ufw status | grep -q "Status: active"
+    if [ $? -ne 0 ]; then
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Ufw não está ativado."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+        echo -ne " ${INPUT}➤➤➤${NC} Deseja ativar o ufw? (s/n) "
+        read -r enable_choice
+        if [[ "$enable_choice" == "s" || "$enable_choice" == "S" ]]; then
+            ufw enable
+            if [ $? -eq 0 ]; then
+                echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+                echo -e "  Ufw foi ativado."
+                echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+            else
+                echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+                echo -e "  Falha ao ativar o ufw."
+                echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━┙${NC}${NL}"
+                return 1
+            fi
+        else
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O ufw não será ativado."
+            echo -e "  As regras de firewall não serão aplicadas."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+            return 1
+        fi
+    fi
+
+    while true; do
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container: "
+        read container_name
+        if [ -z "${container_name}" ]; then
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do container não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+            continue
+        fi
+
+        if ! check_container_exists "$container_name"; then
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O container [${container_name}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}➤➤➤${NC} Informe a porta exposta pelo container (ex: 80): "
+        read container_port
+        if [ -z "${container_port}" ]; then
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Porta do container não pode ser vazia."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o IP permitido para acessar o container: "
+        read ip_address
+        if [ -z "${ip_address}" ]; then
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  IP não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+            continue
+        elif ! is_valid_ip "$ip_address"; then
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  IP fornecido não é válido."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+            continue
+        fi
+        break
+    done
+
+    ufw allow from "$ip_address" to any port "$container_port" proto tcp
+    ufw deny "$container_port"/tcp
+
+    if [ $? -eq 0 ]; then
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Regras de firewall aplicadas para container [${container_name}]."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+        sleep 0.3
+        main_menu
+    else
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao aplicar regras no container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+    fi
+}
+function limit_connections() {
+    local container_name
+    local container_port
+    local max_connections
+
+    echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Limitar Conexões${NC} ${BLUE}:::...${NC}${NL}"
+
+    ufw status | grep -q "Status: active"
+    if [ $? -ne 0 ]; then
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Ufw não está ativado."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+        echo -ne " ${INPUT}➤➤➤${NC} Deseja ativar o ufw? (s/n) "
+        read -r enable_choice
+        if [[ "$enable_choice" == "s" || "$enable_choice" == "S" ]]; then
+            ufw enable
+            if [ $? -eq 0 ]; then
+                echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+                echo -e "  Ufw foi ativado."
+                echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+            else
+                echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+                echo -e "  Falha ao ativar o ufw."
+                echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━┙${NC}${NL}"
+                return 1
+            fi
+        else
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O ufw não será ativado."
+            echo -e "  As regras de limitação de conexões não serão aplicadas."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+            return 1
+        fi
+    fi
+
+    while true; do
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container: "
+        read -r container_name
+        if [ -z "${container_name}" ]; then
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do container não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+            continue
+        fi
+
+        if ! check_container_exists "$container_name"; then
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O container [${container_name}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}➤➤➤${NC} Informe a porta exposta pelo container (ex: 80): "
+        read -r container_port
+        if [ -z "${container_port}" ]; then
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Porta do container não pode ser vazia."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o número máximo de conexões permitidas (ex: 100): "
+        read -r max_connections
+        if [ -z "${max_connections}" ]; then
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Número máximo de conexões não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
+            continue
+        elif ! [[ "$max_connections" =~ ^[0-9]+$ ]]; then
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O valor fornecido não é um número válido."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
+            continue
+        fi
+        break
+    done
+
+    ufw limit "$container_port"/tcp
+
+    if [ $? -eq 0 ]; then
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Regras de limitação de conexões aplicadas para container [${container_name}]."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+        sleep 0.3
+        main_menu
+    else
+        eecho -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao aplicar regras no container [${container_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+    fi
+}
+
+# --->>> //Firewall <<<---
+
 # --->>> DOCKER <<<---
 function docker_install() {
     echo ""
@@ -1911,6 +2150,49 @@ function database_menu() {
         ;;
     esac
 }
+function firewall_menu() {
+    check_docker_installed
+    if [ $? -ne 0 ]; then
+        sleep 0.3
+        return
+    fi
+    check_and_install_ufw
+    if [ $? -ne 0 ]; then
+        sleep 0.3
+        return
+    fi
+    echo -e "${NL}${BLUE}╔═════════════════════════════╗"
+    echo -e "║           ${NC}${BOLD}FIREWALL${NC}${BLUE}          ║"
+    echo -e "╠═════════════════════════════╣"
+    echo -e "║${NC} [${INPUT}1${NC}] - Configurar Firewall  ${BLUE} ║"
+    echo -e "║${NC} [${INPUT}2${NC}] - Limitar conexões     ${BLUE} ║"
+    echo -e "║${NC} [${INPUT}0${NC}] - Voltar               ${BLUE} ║"
+    echo -e "╚═════════════════════════════╝${NC}"
+    echo -ne " ${INPUT}➤➤➤${NC} Selecione uma opção: "
+    read -r firewall_option
+    case $firewall_option in
+    1)
+        sleep 0.3
+        firewall_ip
+        ;;
+    2)
+        sleep 0.3
+        limit_connections
+        ;;
+    0)
+        sleep 0.3
+        return
+        ;;
+    *)
+        sleep 0.3
+        echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Opção inválida."
+        echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
+        sleep 0.3
+        main_menu
+        ;;
+    esac
+}
 function docker_menu() {
     echo -e "${NL}${BLUE}╔══════════════════════════════╗"
     echo -e "║           ${NC}${BOLD}DOCKER${NC}${BLUE}             ║"
@@ -1944,6 +2226,7 @@ function docker_menu() {
         ;;
     esac
 }
+
 function main_menu() {
     while true; do
         echo -e "${NL}${BLUE}╔══════════════════════════════╗"
@@ -1953,6 +2236,7 @@ function main_menu() {
         echo -e "║${NC} [${INPUT}2${NC}] - Servidores Web         ${BLUE}║"
         echo -e "║${NC} [${INPUT}3${NC}] - Servidores SFTP        ${BLUE}║"
         echo -e "║${NC} [${INPUT}4${NC}] - Bancos de Dados        ${BLUE}║"
+        echo -e "║${NC} [${INPUT}5${NC}] - Firewall               ${BLUE}║"
         echo -e "║${NC} [${INPUT}0${NC}] - Sair                   ${BLUE}║"
         echo -e "╚══════════════════════════════╝${NC}"
         echo -ne "${INPUT}➤➤➤${NC} Selecione uma opção: "
@@ -1983,11 +2267,9 @@ function main_menu() {
         5)
             sleep 0.3
             clear
-            create_samba_container
+            firewall_menu
             ;;
-
         0)
-
             echo -e "${NL}${MAGENTA}┍━━ 🖐  ━━━━━━━━━━━━┑${NC}"
             echo -e "    ENCERRANDO."
             echo -e "${MAGENTA}┕━━━━━━━━━━ 🖐  ━━━━┙${NC}${NL}"
