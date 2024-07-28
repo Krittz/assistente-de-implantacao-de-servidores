@@ -389,8 +389,8 @@ function create_mariadb_container() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MariaDB${NC} ${BLUE}:::...${NC}"
     while true; do
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
+
         read container_name
         if check_container_name "$container_name"; then
             break
@@ -398,12 +398,10 @@ function create_mariadb_container() {
     done
     while true; do
 
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do usuário do banco de dados: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do usuário do banco de dados: "
         read db_user
 
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe a senha do usuário do banco de dados: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe a senha do usuário do banco de dados: "
         read -s db_password
         echo
 
@@ -475,32 +473,41 @@ function restore_backup_mariadb() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup MariaDB${NC}${BLUE} :::...${NC}"
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do container MariaDB: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container MariaDB: "
         read container_name
 
         if [ -z "${container_name}" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do container não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
 
         if ! check_container_exists "${container_name}"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O container [${container_name}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
         break
     done
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados MariaDB: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do banco de dados MariaDB: "
         read database_name
 
         if [ -z "${database_name}" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do banco de dados não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
         break
     done
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o caminho completo do arquivo de backup: "
         read backup_file_path
 
         if [ ! -f "$backup_file_path" ]; then
@@ -541,7 +548,9 @@ function restore_backup_mariadb() {
 
         docker exec "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${database_name}'."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao criar o banco de dados [${database_name}]."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             return 1
         fi
     fi
@@ -552,9 +561,16 @@ function restore_backup_mariadb() {
     docker exec -i "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} ${database_name}" <"$backup_file_path"
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}' no banco de dados '${database_name}'."
+
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Backup '${database_name}' restaurado com sucesso."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}' no banco de dados '${database_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao restaurar backup [${database_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+
         return 1
     fi
     sleep 0.3
@@ -566,10 +582,13 @@ function backup_mariadb() {
     local backup_file_path
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Backup MariaDB${NC}${BLUE} :::...${NC}"
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do container MariaDB: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container MariaDB: "
         read container_name
         if [ -z "${container_name}" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do container não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
 
@@ -581,25 +600,29 @@ function backup_mariadb() {
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados MariaDB: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do banco de dados MariaDB: "
         read db_name
 
         if [ -z "$db_name" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do banco de dados não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
     done
 
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo para salvar o backup (incluir o nome do arquivo): "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o caminho completo para salvar o backup (incluir o nome do arquivo): "
         read backup_file_path
 
         local dir_path
         dir_path=$(dirname "$backup_file_path")
 
         if [ ! -d "$dir_path" ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${dir_path}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O diretório [${dir_path}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
@@ -622,15 +645,21 @@ function backup_mariadb() {
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Criando backup do banco de dados '${db_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD} Criando backup do banco de dados '${db_name}'"
+    echo -e "----------------------------------------------------${NC}${NL}"
 
     docker exec "$container_name" sh -c "exec mariadb-dump -u root -p\${MARIADB_ROOT_PASSWORD} ${db_name}" >"$backup_file_path"
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Backup [${db_name}] criado com sucesso."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${db_name}'."
+
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar backup do banco de dados [${db_name}]"
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -648,7 +677,7 @@ function create_mysql_container() {
     while true; do
 
         echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do novo container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
         read container_name
 
         if check_container_name "$container_name"; then
@@ -656,12 +685,10 @@ function create_mysql_container() {
         fi
     done
     while true; do
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe o nome do usuário do banco de dados: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do usuário do banco de dados: "
         read db_user
 
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -ne " ${INPUT}➤${NC} Informe a senha do usuário do banco de dados: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe a senha do usuário do banco de dados: "
         read -s db_password
         echo
 
