@@ -41,7 +41,7 @@ function check_container_name() {
         return 1
     else
         echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -e "  Nome do container '${container_name}' está disponível."
+        echo -e "  Nome do container [${container_name}] está disponível."
         echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         return 0
     fi
@@ -192,7 +192,7 @@ function restore_backup_postgresql() {
 
         if ! check_container_exists "${container_name}"; then
             echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-            echo -e "  O container '${container_name}' não existe."
+            echo -e "  O container [${container_name}] não existe."
             echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
@@ -512,7 +512,7 @@ function restore_backup_mariadb() {
 
         if [ ! -f "$backup_file_path" ]; then
             echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-            echo -e "  O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "  O arquivo de backup [${backup_file_path}] não existe."
             echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
@@ -535,7 +535,7 @@ function restore_backup_mariadb() {
         fi
     fi
 
-    echo -e "${NL}${BLUE}${BOLD}VERIFICANDO A EXISTÊNCIA DO BANCO DE DADOS '${database_name}' NO CONTAINER '${container_name}'"
+    echo -e "${NL}${BLUE}${BOLD}VERIFICANDO A EXISTÊNCIA DO BANCO DE DADOS [${database_name}] NO CONTAINER [${container_name}]"
     echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
 
     db_exists=$(docker exec "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
@@ -555,15 +555,15 @@ function restore_backup_mariadb() {
         fi
     fi
 
-    echo -e "${NL}${BLUE} >>>${NC}${BOLD} Restaurando o backup no container '${container_name}' no banco de dados '${database_name}' ${NC}${BLUE}<<<${NC}"
-    echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
+    echo -e "${NL}${BLUE}${BOLD}RESTAURANDO O BACKUP NO CONTAINER [${container_name}] NO BANCO DE DADOS [${database_name}]"
+    echo -e "--------------------------------------------------------------------${NC}${NL}"
 
     docker exec -i "$container_name" sh -c "exec mariadb -u root -p\${MARIADB_ROOT_PASSWORD} ${database_name}" <"$backup_file_path"
 
     if [ $? -eq 0 ]; then
 
         echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -e "  Backup '${database_name}' restaurado com sucesso."
+        echo -e "  Backup [${database_name}] restaurado com sucesso."
         echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
 
     else
@@ -802,7 +802,7 @@ function restore_backup_mysql() {
 
         if ! check_directory_exists "$(dirname "$backup_file_path")"; then
             echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-            echo -e "  Diretório '$(dirname "$backup_file_path")' não existe."
+            echo -e "  Diretório [$(dirname "$backup_file_path")] não existe."
             echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
 
             continue
@@ -826,7 +826,7 @@ function restore_backup_mysql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE}${BOLD}VERIFICANDO A EXISTÊNCIA DO BANCO DE DADOS '${database_name}' NO CONTAINER '${container_name}'"
+    echo -e "${NL}${BLUE}${BOLD}VERIFICANDO A EXISTÊNCIA DO BANCO DE DADOS [${database_name}] NO CONTAINER [${container_name}]"
     echo -e "----------------------------------------------------------------------------------${NC}${NL}"
 
     db_exists=$(docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} -e 'SHOW DATABASES LIKE \"${database_name}\";'")
@@ -847,7 +847,7 @@ function restore_backup_mysql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE}${BOLD}RESTAURANDO O BACKUP NO CONTAINER '${container_name}' NO BANCO DE DADOS '${database_name}'"
+    echo -e "${NL}${BLUE}${BOLD}RESTAURANDO O BACKUP NO CONTAINER [${container_name}] NO BANCO DE DADOS [${database_name}]"
     echo -e "----------------------------------------------------------------------------------${NC}${NL}"
     docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} ${database_name}" <"$backup_file_path"
 
@@ -857,7 +857,9 @@ function restore_backup_mysql() {
         echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
 
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}' no banco de dados '${database_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "   Falha ao restaurar o banco de dados [${database_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
         return 1
     fi
 
@@ -941,14 +943,14 @@ function backup_mysql() {
         fi
     fi
 
-    echo -e "${NL}${BLUE}${BOLD}CRIANDO BACKUP DO BANCO DE DADOS '${db_name}'"
+    echo -e "${NL}${BLUE}${BOLD}CRIANDO BACKUP DO BANCO DE DADOS [${db_name}]"
     echo -e "-------------------------------------------${NC}${NL}"
 
     docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MYSQL_ROOT_PASSWORD} ${db_name}" >"$backup_file_path"
 
     if [ $? -eq 0 ]; then
         echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-        echo -e "  Backup do banco de dados [${db_name}' criado com sucesso."
+        echo -e "  Backup do banco de dados [${db_name}] criado com sucesso."
         echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
 
     else
