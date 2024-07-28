@@ -795,13 +795,16 @@ function restore_backup_mysql() {
         read backup_file_path
         if [ ! -f "$backup_file_path" ]; then
             echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-            echo -e "  O arquivo de backup '${backup_file_path}' não existe."
+            echo -e "  O arquivo de backup [${backup_file_path}] não existe."
             echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
 
         if ! check_directory_exists "$(dirname "$backup_file_path")"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Diretório '$(dirname "$backup_file_path")' não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
         break
@@ -836,7 +839,10 @@ function restore_backup_mysql() {
 
         docker exec "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} -e 'CREATE DATABASE ${database_name};'"
         if [ $? -ne 0 ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o banco de dados '${database_name}'."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "   Falha ao criar o banco de dados [${database_name}]."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+
             return 1
         fi
     fi
@@ -846,7 +852,10 @@ function restore_backup_mysql() {
     docker exec -i "$container_name" sh -c "exec mysql -u root -p\${MYSQL_ROOT_PASSWORD} ${database_name}" <"$backup_file_path"
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup restaurado com sucesso no container '${container_name}' no banco de dados '${database_name}'."
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Backup [${database_name}] restaurado em [${container_name}] com sucesso."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
     else
         echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao restaurar o backup no container '${container_name}' no banco de dados '${database_name}'."
         return 1
@@ -866,12 +875,17 @@ function backup_mysql() {
         echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container MySQL: "
         read container_name
         if [ -z "${container_name}" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do container não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
 
         if ! check_container_exists "$container_name"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕: O container '${container_name}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O container [${container_name}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
@@ -882,7 +896,9 @@ function backup_mysql() {
         read db_name
 
         if [ -z "$db_name" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do banco de dados não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
@@ -893,11 +909,16 @@ function backup_mysql() {
         read backup_file_path
 
         if [ -z "$backup_file_path" ]; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '${backup_file_path}' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Diretório [${backup_file_path}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         if ! check_directory_exists "$(dirname "$backup_file_path")"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O diretório '$(dirname "$backup_file_path")' não existe."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Diretório [$(dirname "$backup_file_path")] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
 
@@ -926,9 +947,15 @@ function backup_mysql() {
     docker exec "$container_name" sh -c "exec mysqldump -u root -p\${MYSQL_ROOT_PASSWORD} ${db_name}" >"$backup_file_path"
 
     if [ $? -eq 0 ]; then
-        echo -e "${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Backup do banco de dados '${db_name}' criado com sucesso."
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Backup do banco de dados [${db_name}' criado com sucesso."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
     else
-        echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao criar o backup do banco de dados '${db_name}'."
+        echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Falha ao criar backup do banco de dados [${db_name}]."
+        echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+
         return 1
     fi
 
