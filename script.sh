@@ -106,16 +106,14 @@ function create_postgresql_container() {
         fi
     done
     while true; do
-        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do usuário do banco de dados: "
-        read db_user
 
         echo -ne " ${INPUT}➤➤➤${NC} Informe a senha do usuário do banco de dados: "
         read -s db_password
         echo
 
-        if [ -z "$db_user" ] || [ -z "$db_password" ]; then
+        if [ -z "$db_password" ]; then
             echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
-            echo -e "  Usuário e senha não podem ser vazios."
+            echo -e "  A senha não pode ser vazia."
             echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
             continue
         fi
@@ -138,6 +136,7 @@ function create_postgresql_container() {
 FROM postgres:latest
 ENV POSTGRES_PASSWORD=$db_password
 EXPOSE $suggested_port
+
 EOF
 
     echo -e "${NL}${BLUE}${BOLD}CONSTRUINDO IMAGEM DOCKER"
@@ -159,7 +158,7 @@ EOF
         echo -e "  ${MAGENTA}🜙 ${NC}Container: ${BOLD}$container_name${NC}"
         echo -e "  ${MAGENTA}🜙 ${NC}Banco: ${BOLD}PostgreSQL${NC}"
         echo -e "  ${MAGENTA}🜙 ${NC}Porta: ${BOLD}$suggested_port${NC}"
-        echo -e "  ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}$db_user${NC}"
+        echo -e "  ${MAGENTA}🜙 ${NC}Usuário: ${BOLD}postgres${NC}"
         echo -e "${SUCCESS}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         main_menu
