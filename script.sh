@@ -1988,7 +1988,10 @@ function main_menu() {
             ;;
 
         0)
-            echo -ne "${BLUE}Encerrando ...${NL}"
+
+            echo -e "${NL}${MAGENTA}┍━━ 🖐  ━━━━━━━━━━━━┑${NC}"
+            echo -e "    ENCERRANDO."
+            echo -e "${MAGENTA}┕━━━━━━━━━━ 🖐  ━━━━┙${NC}${NL}"
             sleep 0.3
             exit 0
             ;;
@@ -2021,10 +2024,9 @@ echo -e ":::${NC}   Instituto Federal de Educação, Ciência e Tecnologia ${BLU
 echo -e ":::${NC}         do Triângulo Mineiro - Campus Paracatu        ${BLUE}:::"
 echo -e ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::${NC}"
 echo -e ""
-echo -e "𒁷  Autor:       Cristian Alves Silva"
-echo -e "𒁷  Orientador:  Prof. Dr. Claiton Luiz Soares"
-echo -e "𒁷  Curso:       Tecnologia em Análise e Desenvolvimento de Sistemas"
-echo -e "𒁷  Título:      Assistente de implantação de servidores em Docker"
-echo -e ""
+echo -e "★ Autor:       Cristian Alves Silva"
+echo -e "★ Orientador:  Prof. Dr. Claiton Luiz Soares"
+echo -e "★ Curso:       Tecnologia em Análise e Desenvolvimento de Sistemas"
+echo -e "★ Título:      Assistente de implantação de servidores em Docker"
 
-#main_menu
+main_menu
