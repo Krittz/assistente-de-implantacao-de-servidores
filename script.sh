@@ -676,7 +676,6 @@ function create_mysql_container() {
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Criando MySQL${NC} ${BLUE}:::...${NC}"
     while true; do
 
-        echo -e "${NL}${INPUT}┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
         echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do novo container: "
         read container_name
 
@@ -759,31 +758,40 @@ function restore_backup_mysql() {
 
     echo -e "${NL}${BLUE} ...::: ${NC}${BOLD}Restaurar Backup${NC}${BLUE} :::...${NC}"
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do container: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do container: "
         read container_name
         if [ -z "${container_name}" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do container não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do container não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
 
         if ! check_container_exists "$container_name"; then
-            echo -e "${ERROR}${BOLD}✕ ERRO ✕${NC}: O container '${container_name}' não existe."
+
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  O container [${container_name}] não existe."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             continue
         fi
         break
     done
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o nome do banco de dados: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do banco de dados: "
         read database_name
 
         if [ -z "${database_name}" ]; then
-            echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Nome do banco de dados não pode ser vazio!"
+            echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Nome do banco de dados não pode ser vazio."
+            echo -e "${WARNING}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚠  ━━━━━━━┙${NC}${NL}"
+
             continue
         fi
         break
     done
     while true; do
-        echo -ne " ${INPUT}↳${NC} Informe o caminho completo do arquivo de backup: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o caminho completo do arquivo de backup: "
         read backup_file_path
         if [ ! -f "$backup_file_path" ]; then
             echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
@@ -1440,18 +1448,23 @@ function docker_install() {
     echo ""
     if command -v docker &>/dev/null; then
         sleep 0.3
-        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker já está instalado!"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Docker instalado."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         return
     else
         echo -e "${NL}${MAGENTA} ...::: ${NC}${BOLD}Instalação do Docker${NC} ${MAGENTA}:::...${NC}"
-        echo -e "${NL}${BLUE} >>>${NC}${BOLD} Atualizando Sistema ${NC}${BLUE}<<<${NC}"
-        echo -e "${BLUE}----------------------------------------------------${NC}${NL}"
+        echo -e "${NL}${BLUE}${BOLD} Atualizando Sistema"
+        echo -e "----------------------------------------------------${NC}${NL}"
 
         apt update && apt upgrade -y
         if [ $? -ne 0 ]; then
             sleep 0.3
-            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao atualizar sistema. Verifique sua conexão com a internet e tente novamente."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao atualizar sistema."
+            echo -e "  Verifique sua conexão com a internet."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             sleep 0.3
             return
         fi
@@ -1461,7 +1474,10 @@ function docker_install() {
         apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
         if [ $? -ne 0 ]; then
             sleep 0.3
-            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao instalar pacotes necessários. Verifique sua conexão com a internet e tente novamente."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao instalar pacotes necessários."
+            echo -e "  Verifique sua conexão com a internet."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             sleep 0.3
             return
         fi
@@ -1472,7 +1488,10 @@ function docker_install() {
         curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
         if [ $? -ne 0 ]; then
             sleep 0.3
-            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao adicionar chave GPG. Verifique sua conexão com a internet e tente novamente."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao adicionar chave GPG."
+            echo -e "  Verifique sua conexão com a internet."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             sleep 0.3
             return
         fi
@@ -1488,7 +1507,10 @@ function docker_install() {
         apt install -y docker-ce docker-ce-cli containerd.io
         if [ $? -ne 0 ]; then
             sleep 0.3
-            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao instalar Docker Engine. Verifique sua conexão com a internet e tente novamente."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao instalar Docker Engine."
+            echo -e "  Verifique sua conexão com a internet."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
             sleep 0.3
             return
         fi
@@ -1496,7 +1518,7 @@ function docker_install() {
         echo -e "${NL}${BLUE}${BOLD}ADICIONANDO USUÁRIO AO GRUPO DOCKER"
         echo -e "--------------------------------------${NC}${NL}"
 
-        echo -ne " ${INPUT}↳${NC} Informe o nome do usuário que utilizará o Docker: "
+        echo -ne " ${INPUT}➤➤➤${NC} Informe o nome do usuário que utilizará o Docker: "
         read -r usr
         usermod -aG docker $usr
         chown $usr:docker /var/run/docker.sock
@@ -1504,11 +1526,17 @@ function docker_install() {
         docker --version
         if [ $? -eq 0 ]; then
             sleep 0.3
-            echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker instalado!"
+            echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Docker instalado."
+            echo -e "${SUCCESS}┕━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
             sleep 0.3
         else
             sleep 0.3
-            echo -e "${NL}${ERROR}${BOLD}✕ ERRO ✕${NC}: Falha ao instalar Docker. Verifique sua conexão com a internet e tente novamente."
+            echo -e "${NL}${ERROR}┍━━ ✕  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑${NC}"
+            echo -e "  Falha ao instalar o Docker."
+            echo -e "  Verifique sua conexão com a internet."
+            echo -e "${ERROR}┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✕  ━━━━━━━┙${NC}${NL}"
+
             sleep 0.3
             return
         fi
@@ -1518,7 +1546,9 @@ function docker_uninstall() {
     check_docker_installed
     if [ $? -ne 0 ]; then
         sleep 0.3
-        echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker não está instalado!"
+        echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━┑${NC}"
+        echo -e "  Docker desinstalado."
+        echo -e "${SUCCESS}┕━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
         sleep 0.3
         return
     fi
@@ -1530,7 +1560,11 @@ function docker_uninstall() {
     apt clean
     groupdel docker
     sleep 0.3
-    echo -e "${NL}${SUCCESS}${BOLD}✓ SUCESSO ✓${NC}: Docker desinstalado!"
+
+    echo -e "${NL}${SUCCESS}┍━━ ✓  ━━━━━━━━━━━━━━━━━━━┑${NC}"
+    echo -e "  Docker desinstalado."
+    echo -e "${SUCCESS}┕━━━━━━━━━━━━━━ ✓  ━━━━━━━┙${NC}${NL}"
+
     sleep 0.3
 }
 # --->>> //DOCKER <<<---
@@ -1756,7 +1790,6 @@ function postgre_menu() {
         ;;
     *)
         sleep 0.3
-        echo -e "${WARNING}${BOLD}⚠ AVISO ⚠ ${NC}: Opção inválida!"
         echo -e "${NL}${WARNING}┍━━ ⚠  ━━━━━━━━━━━━━━━━━┑${NC}"
         echo -e "  Opção inválida."
         echo -e "${WARNING}┕━━━━━━━━━━━━━━━ ⚠  ━━━━┙${NC}${NL}"
