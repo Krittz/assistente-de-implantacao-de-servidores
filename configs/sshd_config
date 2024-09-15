@@ -1,0 +1,6 @@
+Subsystem sftp internal-sftp
+Match User cris
+    PasswordAuthentication yes
+    ChrootDirectory /home/cris
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
