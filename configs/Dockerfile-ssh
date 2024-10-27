@@ -1,7 +1,0 @@
-FROM debian:latest
-RUN apt-get update     && DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server     && mkdir /var/run/sshd     && useradd -m cris     && echo "cris:cal" | chpasswd     && chown root:root /home/cris     && chmod 755 /home/cris     && mkdir /home/cris/upload     && chown cris:cris /home/cris/upload     && echo "Subsystem sftp internal-sftp" >> /etc/ssh/sshd_config
-
-COPY configs/sshd_config /etc/ssh/sshd_config
-VOLUME /home/cris
-EXPOSE 22
-CMD ["/usr/sbin/sshd", "-D"]
